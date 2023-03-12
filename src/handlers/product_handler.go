@@ -26,7 +26,7 @@ func NewProductHandler(
 	}
 
 	apiV1 := e.Group("/v1/products")
-	apiV1.GET("", handler.List)
+	apiV1.GET("", handler.List, middleware.RBAC())
 
 	return
 }
@@ -42,8 +42,8 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 		page = 1
 	}
 
-	perPage, err := strconv.Atoi(ctx.QueryParam("per_page"))
-	if err != nil || perPage < 1 {
+	perPage, err := strconv.Atoi(ctx.QueryParam("perPage"))
+	if err != nil || perPage < 1 || perPage > 100 {
 		perPage = 10
 	}
 

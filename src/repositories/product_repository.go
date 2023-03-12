@@ -24,7 +24,6 @@ func NewProductRepository(db *pgx.Conn) repo.ProductRepositoryInterface {
 func (r *productRepository) List(ctx context.Context, page int, perPage int, sort string, filter entity.ProductEntityRepositoryFilter) (products []*entity.ProductEntity, count int, err error) {
 	sorts := utils.GenerateSort(sort)
 	offset, limit := utils.GenerateOffsetLimit(page, perPage)
-
 	query := `
 		SELECT 
 			p.id, p.key, p.category_id, pc.name, p.name, p.slug, p.description, p.unit, p.price, p.sell_price, p.stock, p.stock_minimum, p.is_stock_unlimited, p.status 
