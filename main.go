@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -53,7 +54,7 @@ func main() {
 
 	// Start server
 	go func() {
-		if err := e.Start(":3000"); err != nil && err != http.ErrServerClosed {
+		if err := e.Start(fmt.Sprintf(":%s", configApp.Port)); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal(err)
 		}
 	}()
