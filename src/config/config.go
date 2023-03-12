@@ -32,7 +32,7 @@ type StorageConfig struct {
 
 // LoadConfig will load config from environment variable
 func LoadConfig() (config *Config) {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		panic(err)
 	}
 
