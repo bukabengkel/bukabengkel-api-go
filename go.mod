@@ -1,6 +1,6 @@
 module github.com/peang/bukabengkel-api-go
 
-go 1.18
+go 1.17
 
 require (
 	github.com/casbin/casbin/v2 v2.65.1
