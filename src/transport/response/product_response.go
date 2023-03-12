@@ -32,7 +32,7 @@ func ProductDetailResponse(product *entity.ProductEntity) *ProductResponse {
 		Slug:             product.Slug,
 		Description:      product.Description,
 		Unit:             product.Unit,
-		Thumbnail:        product.Thumbnail.FileName,
+		Thumbnail:        product.Thumbnail.Path,
 		Price:            product.Price,
 		SellPrice:        product.SellPrice,
 		Stock:            product.Stock,

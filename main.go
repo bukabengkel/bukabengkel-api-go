@@ -10,6 +10,7 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/handlers"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
+	"github.com/peang/bukabengkel-api-go/src/services"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
 )
@@ -32,11 +33,13 @@ func main() {
 
 	// services
 	jwtService := config.NewJWTService(configApp.JWTSecretKey, configApp.BaseURL)
+	fileService, err := services.NewFileService(configApp)
+	utils.PanicIfNeeded(err)
 
 	middleware := middleware.NewMiddleware(enfocer, appLogger, jwtService)
 
 	// Repositories
-	productRepo := repository.NewProductRepository(db)
+	productRepo := repository.NewProductRepository(db, fileService)
 
 	// Usecases
 	productUsecase := usecase.NewProductUsecase(productRepo)
