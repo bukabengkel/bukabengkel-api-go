@@ -29,9 +29,6 @@ jobs:
               git checkout .
               git pull origin development
               go mod tidy
-              make tool-migrate
-              make migration-up
-              make seed-up
               go build -o bukabengkel .
               service bukabengkel restart
             else
