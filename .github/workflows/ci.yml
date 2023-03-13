@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install Go
+        run: sudo apt-get install -y golang-go
       - name: Extract branch name
         shell: bash
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
@@ -27,7 +29,7 @@ jobs:
               git checkout .
               git pull origin development
               go mod tidy
-              go build -o bukabengkel .
+              go build -o main .
               service bukabengkel restart
             else
               echo 'wrong branch'
