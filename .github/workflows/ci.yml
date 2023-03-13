@@ -11,7 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install Go
-        run: sudo apt-get install -y golang-go
+        run: |
+          curl -sSL https://dl.google.com/go/go1.17.2.linux-amd64.tar.gz | sudo tar -C /usr/local -xz
+          echo 'export PATH=$PATH:/usr/local/go/bin' >> $GITHUB_ENV
       - name: Extract branch name
         shell: bash
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
