@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
+
+	_ "net/http/pprof"
 
 	"github.com/labstack/echo/v4"
 	"github.com/peang/bukabengkel-api-go/src/config"
@@ -27,6 +30,7 @@ func main() {
 	// Setup Databse
 	db, err := config.NewPgxDatabase(configApp.DatabaseURL)
 	utils.PanicIfNeeded(err)
+	defer db.Close()
 
 	// Setup Casbin Enfocer
 	enfocer, err := config.NewCasbinEnfocer(configApp)
@@ -49,8 +53,16 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())
 
+	// handlers.NewPporfHandler(e, middleware)
 	handlers.NewHealthHandler(e, middleware)
 	handlers.NewProductHandler(e, middleware, productUsecase)
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Application failed to start:", r)
+			os.Exit(1)
+		}
+	}()
 
 	// Start server
 	go func() {

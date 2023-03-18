@@ -23,7 +23,7 @@ type ProductResponse struct {
 }
 
 // BuildingDetailResponse transforms entity.Building to BuildingResponse
-func ProductDetailResponse(product *entity.ProductEntity) *ProductResponse {
+func ProductDetailResponse(product *entity.Product) *ProductResponse {
 	return &ProductResponse{
 		ID:               product.Key,
 		CategoryID:       product.Category.ID,
@@ -43,7 +43,7 @@ func ProductDetailResponse(product *entity.ProductEntity) *ProductResponse {
 }
 
 // BuildingListResponse transforms []entity.Building to []BuildingResponse
-func ProductListResponse(products []*entity.ProductEntity) []ProductResponse {
+func ProductListResponse(products []*entity.Product) []ProductResponse {
 	var responses []ProductResponse
 	for _, building := range products {
 		response := ProductDetailResponse(building)

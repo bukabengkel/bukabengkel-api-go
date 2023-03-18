@@ -14,17 +14,13 @@ func (m *Middleware) JWTAuth() echo.MiddlewareFunc {
 			ctx := c.Request().Context()
 			tokenStr := c.Request().Header.Get("Authorization")
 
+			// if c.Request().URL.Path == "/debug/pprof" || strings.HasPrefix(c.Request().URL.Path, "/debug/pprof/") {
+			// 	return next(c)
+			// }
+
 			if tokenStr == "" {
 				return c.JSON(http.StatusUnauthorized, utils.NewUnauthorizedError("invalid authorization token"))
 			}
-
-			// _, err := m.jwtservice.ValidateToken(ctx, tokenStr)
-			// if err != nil {
-			// 	return c.JSON(
-			// 		http.StatusUnauthorized,
-			// 		utils.NewUnauthorizedError("invalid authorization token"),
-			// 	)
-			// }
 
 			tokenInfo, err := m.jwtservice.GetTokenInfo(ctx, tokenStr)
 			if err != nil {
@@ -35,8 +31,6 @@ func (m *Middleware) JWTAuth() echo.MiddlewareFunc {
 			}
 
 			c.Set("scope", tokenInfo.Scope)
-			// c.Set("role", tokenInfo.Role)
-			// c.Set("scope", tokenInfo.Scope)
 
 			return next(c)
 		}

@@ -7,27 +7,35 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/peang/bukabengkel-api-go/src/domain/entity"
 	repo "github.com/peang/bukabengkel-api-go/src/domain/repositories"
 	"github.com/peang/bukabengkel-api-go/src/domain/services"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 )
 
-type productRepository struct {
-	db          *pgx.Conn
+type productPostgresRepository struct {
+	pool        *pgxpool.Pool
 	fileService services.FileServiceInterface
 }
 
-func NewProductRepository(db *pgx.Conn, fileService services.FileServiceInterface) repo.ProductRepositoryInterface {
-	return &productRepository{
-		db:          db,
+func NewProductRepository(pool *pgxpool.Pool, fileService services.FileServiceInterface) repo.ProductRepositoryInterface {
+	return &productPostgresRepository{
+		pool:        pool,
 		fileService: fileService,
 	}
 }
 
-func (r *productRepository) List(ctx context.Context, page int, perPage int, sort string, filter entity.ProductEntityRepositoryFilter) (products []*entity.ProductEntity, count int, err error) {
+func (r *productPostgresRepository) List(ctx context.Context, page int, perPage int, sort string, filter repo.ProductRepositoryFilter) (products []*entity.Product, count int, err error) {
+	conn, err := r.pool.Acquire(ctx)
+	if err != nil {
+		return
+	}
+	defer conn.Release()
+
 	sorts := utils.GenerateSort(sort)
 	offset, limit := utils.GenerateOffsetLimit(page, perPage)
+
 	query := `
 		SELECT 
 			p.id, p.key, p.category_id, pc.name, p.name, p.slug, p.description, p.unit, p.price, p.sell_price, p.stock, p.stock_minimum, p.is_stock_unlimited, p.status, 
@@ -37,6 +45,7 @@ func (r *productRepository) List(ctx context.Context, page int, perPage int, sor
 			LEFT JOIN product_category pc ON p.category_id = pc.id
 			LEFT JOIN image im ON im.entity_id = p.id
 			`
+
 	conditions := make([]string, 0)
 	// conditions = append(conditions, fmt.Sprintf("im.entity_type = %d ", entity.ImageProductType))
 	if filter.Name != "" {
@@ -53,16 +62,17 @@ func (r *productRepository) List(ctx context.Context, page int, perPage int, sor
 	query += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
 
 	var rows pgx.Rows
-	rows, err = r.db.Query(ctx, query)
+	rows, err = conn.Query(ctx, query)
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		images := ""
-		var productImages []entity.ImageEntity
-		product := &entity.ProductEntity{}
+		var images string
+		var productImages []entity.Image
+		var product entity.Product
+
 		err = rows.Scan(
 			&product.ID,
 			&product.Key,
@@ -95,7 +105,7 @@ func (r *productRepository) List(ctx context.Context, page int, perPage int, sor
 			productImages[0].Path = r.fileService.BuildUrl(productImages[0].Path, 0, 0)
 			product.Thumbnail = productImages[0]
 		}
-		products = append(products, product)
+		products = append(products, &product)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -107,7 +117,7 @@ func (r *productRepository) List(ctx context.Context, page int, perPage int, sor
 		countQuery += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
-	err = r.db.QueryRow(ctx, countQuery).Scan(&count)
+	err = conn.QueryRow(ctx, countQuery).Scan(&count)
 	if err != nil {
 		return
 	}

@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
-	"github.com/peang/bukabengkel-api-go/src/domain/entity"
+	repo "github.com/peang/bukabengkel-api-go/src/domain/repositories"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	"github.com/peang/bukabengkel-api-go/src/transport/response"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
@@ -34,7 +34,7 @@ func NewProductHandler(
 func (h *ProductHandler) List(ctx echo.Context) (err error) {
 	// ctx := ctx.Request().Context()
 
-	filter := entity.ProductEntityRepositoryFilter{}
+	filter := repo.ProductRepositoryFilter{}
 	sort := "id"
 
 	page, err := strconv.Atoi(ctx.QueryParam("page"))

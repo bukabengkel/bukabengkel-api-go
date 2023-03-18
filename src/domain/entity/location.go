@@ -2,7 +2,7 @@ package entity
 
 import "time"
 
-type LocationEntity struct {
+type Location struct {
 	ID        int
 	Province  string
 	City      string

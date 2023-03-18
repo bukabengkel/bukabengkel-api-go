@@ -5,32 +5,32 @@ import "time"
 type ProductStatus int
 
 const (
-	Inactive ProductStatus = iota
-	Active
+	ProductInactive ProductStatus = iota
+	ProductActive
 )
 
 func (s ProductStatus) String() string {
 	switch s {
-	case Inactive:
+	case ProductInactive:
 		return "inactive"
-	case Active:
+	case ProductActive:
 		return "active"
 	default:
 		return "unknown"
 	}
 }
 
-type ProductEntity struct {
+type Product struct {
 	ID               int
 	Key              string
-	Store            StoreEntity
-	Category         ProductCategoryEntity
+	Store            Store
+	Category         ProductCategory
 	Name             string
 	Slug             string
 	Description      string
 	Unit             string
-	Thumbnail        ImageEntity
-	Images           []ImageEntity
+	Thumbnail        Image
+	Images           []Image
 	Price            float64
 	SellPrice        float64
 	Stock            int
@@ -45,8 +45,4 @@ type ProductEntity struct {
 	UpdatedBy        string
 	DeletedAt        time.Time
 	DeletedBy        string
-}
-
-type ProductEntityRepositoryFilter struct {
-	Name string
 }

@@ -11,29 +11,29 @@ import (
 )
 
 type TokenPayload struct {
-	Issuer   string  `json:"iss"`
-	Subject  string  `json:"sub"`
-	Audience string  `json:"aud"`
-	Nbf      int64   `json:"nbf"`
-	Iat      int64   `json:"iat"`
-	Exp      int64   `json:"exp"`
-	Payload  Payload `json:"payload"`
-	Scope    string  `json:"scope"`
+	Issuer   string
+	Subject  string
+	Audience string
+	Nbf      int64
+	Iat      int64
+	Exp      int64
+	Payload  Payload
+	Scope    string
 }
 
 type Payload struct {
-	ID            string                `json:"id"`
-	FirstName     string                `json:"firstname"`
-	LastName      interface{}           `json:"lastname"`
-	Email         vo.Email              `json:"email"`
-	Mobile        vo.Mobile             `json:"mobile"`
-	Status        float64               `json:"status"`
-	StoreRole     float64               `json:"storeRole"`
-	StoreID       string                `json:"storeId"`
-	StoreName     string                `json:"storeName"`
-	StoreType     float64               `json:"storeType"`
-	StoreTypeName string                `json:"storeTypeName"`
-	StoreLocation entity.LocationEntity `json:"storeLocation"`
+	ID            string
+	FirstName     string
+	LastName      interface{}
+	Email         vo.Email
+	Mobile        vo.Mobile
+	Status        float64
+	StoreRole     float64
+	StoreID       string
+	StoreName     string
+	StoreType     float64
+	StoreTypeName string
+	StoreLocation entity.Location
 }
 
 type jwtService struct {

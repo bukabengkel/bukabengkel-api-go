@@ -6,6 +6,10 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/domain/entity"
 )
 
+type ProductRepositoryFilter struct {
+	Name string
+}
+
 type ProductRepositoryInterface interface {
-	List(ctx context.Context, page int, perPage int, sort string, filter entity.ProductEntityRepositoryFilter) ([]*entity.ProductEntity, int, error)
+	List(ctx context.Context, page int, perPage int, sort string, filter ProductRepositoryFilter) ([]*entity.Product, int, error)
 }
