@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install Go
-        run: |
-          curl -sSL https://dl.google.com/go/go1.17.2.linux-amd64.tar.gz | sudo tar -C /usr/local -xz
-          echo 'export PATH=$PATH:/usr/local/go/bin' >> $GITHUB_ENV
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.2
       - name: Extract branch name
         shell: bash
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
