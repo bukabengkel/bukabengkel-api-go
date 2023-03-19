@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
@@ -31,6 +32,11 @@ func (m *Middleware) JWTAuth() echo.MiddlewareFunc {
 			}
 
 			c.Set("scope", tokenInfo.Scope)
+
+			stores := strings.Split(tokenInfo.Payload.StoreID, "-")
+			storeId := string(stores[0][0])
+
+			c.Set("store_id", storeId)
 
 			return next(c)
 		}

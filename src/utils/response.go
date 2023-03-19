@@ -13,8 +13,8 @@ import (
 type Meta struct {
 	Page      int `json:"page,omitempty"`
 	PerPage   int `json:"perPage,omitempty"`
-	Total     int `json:"total,omitempty"`
-	TotalPage int `json:"totalPage,omitempty"`
+	Total     int `json:"total"`
+	TotalPage int `json:"totalPage"`
 }
 
 type ResponseMessage struct {

@@ -7,7 +7,8 @@ import (
 )
 
 type ProductRepositoryFilter struct {
-	Name string
+	Name    string
+	StoreID int
 }
 
 type ProductRepositoryInterface interface {

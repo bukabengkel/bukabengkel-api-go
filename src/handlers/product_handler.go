@@ -32,9 +32,15 @@ func NewProductHandler(
 }
 
 func (h *ProductHandler) List(ctx echo.Context) (err error) {
-	// ctx := ctx.Request().Context()
+	storeId, err := strconv.Atoi(ctx.Get("store_id").(string))
+	if err != nil {
+		return ctx.JSON(utils.ParseHttpError(err))
+	}
 
-	filter := repo.ProductRepositoryFilter{}
+	filter := repo.ProductRepositoryFilter{
+		StoreID: storeId,
+	}
+
 	sort := "id"
 
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
@@ -47,8 +53,8 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 		perPage = 10
 	}
 
-	if ctx.QueryParam("name") != "" && len(ctx.QueryParam("name")) >= 3 {
-		filter.Name = ctx.QueryParam("name")
+	if ctx.QueryParam("keyword") != "" && len(ctx.QueryParam("keyword")) >= 3 {
+		filter.Name = ctx.QueryParam("keyword")
 	}
 
 	// if ctx.QueryParam("status") != "" {

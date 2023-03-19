@@ -47,7 +47,7 @@ func (r *productPostgresRepository) List(ctx context.Context, page int, perPage 
 			`
 
 	conditions := make([]string, 0)
-	// conditions = append(conditions, fmt.Sprintf("im.entity_type = %d ", entity.ImageProductType))
+	conditions = append(conditions, fmt.Sprintf("p.store_id = %d ", filter.StoreID))
 	if filter.Name != "" {
 		conditions = append(conditions, fmt.Sprintf("p.name ilike '%%%s%%'", filter.Name))
 	}
@@ -61,6 +61,7 @@ func (r *productPostgresRepository) List(ctx context.Context, page int, perPage 
 	query += fmt.Sprintf(" ORDER BY %s %s", sorts.Field, strings.ToUpper(sorts.Method))
 	query += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
 
+	fmt.Println(query)
 	var rows pgx.Rows
 	rows, err = conn.Query(ctx, query)
 	if err != nil {
