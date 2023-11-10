@@ -19,7 +19,8 @@ type ProductResponse struct {
 	Stock            int     `json:"stock"`
 	StockMinimum     int     `json:"stockMinimum"`
 	IsStockUnlimited bool    `json:"isStockUnlimited"`
-	Status           string  `json:"status"`
+	Status           int     `json:"status"`
+	StatusString     string  `json:"statusString"`
 }
 
 // BuildingDetailResponse transforms entity.Building to BuildingResponse
@@ -38,13 +39,14 @@ func ProductDetailResponse(product *entity.Product) *ProductResponse {
 		Stock:            product.Stock,
 		StockMinimum:     product.StockMinimum,
 		IsStockUnlimited: product.IsStockUnlimited,
-		Status:           product.Status.String(),
+		Status:           int(product.Status),
+		StatusString:     product.Status.String(),
 	}
 }
 
 // BuildingListResponse transforms []entity.Building to []BuildingResponse
 func ProductListResponse(products []*entity.Product) []ProductResponse {
-	var responses []ProductResponse
+	var responses = make([]ProductResponse, 0)
 	for _, building := range products {
 		response := ProductDetailResponse(building)
 		responses = append(responses, *response)
