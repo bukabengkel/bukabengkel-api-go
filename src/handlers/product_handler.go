@@ -41,8 +41,6 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 		StoreID: storeId,
 	}
 
-	sort := "id"
-
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil || page < 1 {
 		page = 1
@@ -61,6 +59,7 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 	// 	filter.Status = ctx.QueryParam("status")
 	// }
 
+	sort := "-id"
 	if ctx.QueryParam("sort") != "" {
 		sort = ctx.QueryParam("orders")
 	}
