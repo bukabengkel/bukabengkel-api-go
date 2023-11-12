@@ -23,6 +23,8 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
+
+            export PATH=$PATH:/usr/local/go/bin
             
             DEPLOY_PATH=""
             SERVICE_NAME=""
@@ -36,6 +38,7 @@ jobs:
               echo 'wrong branch'
               exit 1
             fi
+            
             cd $DEPLOY_PATH
             git checkout .
             GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git pull
