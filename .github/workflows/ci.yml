@@ -26,10 +26,10 @@ jobs:
             
             DEPLOY_PATH=""
             SERVICE_NAME=""
-            if [ "${{ env.BRANCH_NAME }}" == "development" ]; then
+            if [ '${{ steps.extract_branch.outputs.branch }}' == 'development' ]; then
               DEPLOY_PATH="/var/www/project/bukabengkel/bukabengkel-api-go"
               SERVICE_NAME="bukabengkel-api-go"
-            elif [ "${{ env.BRANCH_NAME }}" == "master" ]; then
+            elif [ '${{ steps.extract_branch.outputs.branch }}' == 'master' ]; then
               DEPLOY_PATH="/var/www/project/bukabengkel/bukabengkel-api-go-production"
               SERVICE_NAME="bukabengkel-api-go-production"
             else
