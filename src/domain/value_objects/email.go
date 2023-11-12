@@ -1,6 +1,6 @@
 package value_object
 
 type Email struct {
-	Name       string
+	Email      string
 	IsVerified bool
 }

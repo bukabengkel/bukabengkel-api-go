@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/peang/bukabengkel-api-go/src/domain/entity"
@@ -11,14 +13,9 @@ import (
 )
 
 type TokenPayload struct {
-	Issuer   string
-	Subject  string
-	Audience string
-	Nbf      int64
-	Iat      int64
-	Exp      int64
-	Payload  Payload
-	Scope    string
+	jwt.StandardClaims
+	Payload Payload
+	Scope   int `json:"scope"`
 }
 
 type Payload struct {
@@ -63,58 +60,18 @@ func (s *jwtService) ValidateToken(ctx context.Context, tokenString string) (tok
 }
 
 func (s *jwtService) GetTokenInfo(ctx context.Context, tokenString string) (tokenInfo TokenPayload, err error) {
-	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
-
+	payload := &TokenPayload{}
+	token, err := jwt.ParseWithClaims(tokenString, payload, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET_KEY")), nil
+	})
 	if err != nil {
 		return TokenPayload{}, err
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		aud, _ := claims["aud"].(string)
-		iat, _ := claims["iat"].(int64)
-		exp, _ := claims["exp"].(int64)
-		iss, _ := claims["iss"].(string)
-		nbf, _ := claims["nbf"].(int64)
-		sub, _ := claims["sub"].(string)
-		payload, _ := claims["payload"].(map[string]interface{})
-		scope, _ := claims["scope"].(string)
-
-		// email := payload["email"]
-		// _, cerr := strconv.Atoi(sub)
-		// if cerr != nil {
-		// 	err = errors.New("invalid token claims")
-		// 	return
-		// }
-
-		var pyld = Payload{
-			// 	// Email:     email.(vo.Email),
-			// 	// Mobile:        payload["mobile"],
-			Status:        payload["status"].(float64),
-			StoreRole:     payload["storeRole"].(float64),
-			StoreID:       payload["storeId"].(string),
-			StoreName:     payload["storeName"].(string),
-			StoreType:     payload["storeType"].(float64),
-			StoreTypeName: payload["storeTypeName"].(string),
-			// 	// StoreLocation: payload["storeLocation"].(string),
-		}
-		pyld.FirstName = payload["firstname"].(string)
-		if value, ok := payload["lastname"].(string); ok {
-			pyld.LastName = value
-		}
-
-		tokenInfo = TokenPayload{
-			Issuer:   iss,
-			Subject:  sub,
-			Audience: aud,
-			Nbf:      nbf,
-			Iat:      iat,
-			Exp:      exp,
-			Payload:  pyld,
-			Scope:    scope,
-		}
-	} else {
-		err = errors.New("invalid token claims")
+	claim := token.Claims.(*TokenPayload)
+	if claim.ExpiresAt < time.Now().Unix() {
+		return TokenPayload{}, errors.New("Token Expired")
 	}
 
-	return
+	return *payload, nil
 }

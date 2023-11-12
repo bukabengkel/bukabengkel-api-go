@@ -20,22 +20,23 @@ func (m *Middleware) JWTAuth() echo.MiddlewareFunc {
 			// }
 
 			if tokenStr == "" {
-				return c.JSON(http.StatusUnauthorized, utils.NewUnauthorizedError("invalid authorization token"))
+				return c.JSON(http.StatusUnauthorized, utils.NewUnauthorizedError("Invalid Auth Token"))
 			}
 
 			tokenInfo, err := m.jwtservice.GetTokenInfo(ctx, tokenStr)
+
 			if err != nil {
 				return c.JSON(
 					http.StatusUnauthorized,
-					utils.NewUnauthorizedError("invalid authorization token"),
+					utils.NewUnauthorizedError(err.Error()),
 				)
 			}
 
+			c.Set("payload", tokenInfo.Payload)
 			c.Set("scope", tokenInfo.Scope)
 
 			stores := strings.Split(tokenInfo.Payload.StoreID, "-")
 			storeId := string(stores[0][0])
-
 			c.Set("store_id", storeId)
 
 			return next(c)
