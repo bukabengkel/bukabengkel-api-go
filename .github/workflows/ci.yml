@@ -22,15 +22,22 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            if [ '${{ steps.extract_branch.outputs.branch }}' == 'development' ]; then
-              export PATH=$PATH:/usr/local/go/bin
-              cd /var/www/project/bukabengkel/bukabengkel-api-go
-              git checkout .
-              git pull origin development
-              go mod tidy
-              go build -o main .
-              supervisorctl restart bukabengkel-api-go
+            DEPLOY_PATH=""
+            SERVICE_NAME=""
+            if [ "${{ env.BRANCH_NAME }}" == "development" ]; then
+              DEPLOY_PATH="/var/www/project/bukabengkel/bukabengkel-api-go"
+              SERVICE_NAME="bukabengkel-api-go"
+            elif [ "${{ env.BRANCH_NAME }}" == "master" ]; then
+              DEPLOY_PATH="/var/www/project/bukabengkel/bukabengkel-api-go-production"
+              SERVICE_NAME="bukabengkel-api-go-production"
             else
               echo 'wrong branch'
+              exit 1
             fi
-          
+            cd $DEPLOY_PATH
+            git checkout .
+            GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git pull
+            go mod tidy
+            go build -o main .
+            supervisorctl restart $SERVICE_NAME
+            
