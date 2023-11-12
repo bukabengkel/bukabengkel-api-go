@@ -22,6 +22,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
+            set -e
+            
             DEPLOY_PATH=""
             SERVICE_NAME=""
             if [ "${{ env.BRANCH_NAME }}" == "development" ]; then
