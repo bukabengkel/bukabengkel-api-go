@@ -71,9 +71,12 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 			EntityType: utils.Uint(1),
 		})
 		if err != nil {
-			thumbnail = entity.Image{}
+			return nil, 0, err
 		}
-		thumbnail = *images[0]
+
+		if len(images) > 0 {
+			thumbnail = *images[0]
+		}
 
 		entityProduct := models.LoadProductModel(product)
 		entityProduct.Thumbnail = &thumbnail

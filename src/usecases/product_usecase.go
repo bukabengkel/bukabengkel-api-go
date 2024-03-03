@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/peang/bukabengkel-api-go/src/domain/entity"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
@@ -28,7 +27,6 @@ func NewProductUsecase(
 
 func (u *productUsecase) List(ctx context.Context, page int, perPage int, sort string, filter repository.ProductRepositoryFilter) (*[]entity.Product, int, error) {
 	products, count, err := u.productRepository.List(ctx, page, perPage, sort, filter)
-	fmt.Println(products)
 	if err != nil {
 		err = utils.NewInternalServerError(err)
 	}
