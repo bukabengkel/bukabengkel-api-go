@@ -5,12 +5,14 @@ import (
 
 	"github.com/peang/bukabengkel-api-go/src/domain/entity"
 	"github.com/peang/bukabengkel-api-go/src/models"
+	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 	"github.com/uptrace/bun"
 )
 
 type ImageRepository struct {
-	db *bun.DB
+	db          *bun.DB
+	fileService *file_service.S3Service
 }
 
 type ImageRepositoryFilter struct {
@@ -18,9 +20,10 @@ type ImageRepositoryFilter struct {
 	EntityType *uint
 }
 
-func NewImageRepository(db *bun.DB) *ImageRepository {
+func NewImageRepository(db *bun.DB, fileService *file_service.S3Service) *ImageRepository {
 	return &ImageRepository{
-		db: db,
+		db:          db,
+		fileService: fileService,
 	}
 }
 
@@ -57,7 +60,7 @@ func (r *ImageRepository) Find(ctx context.Context, page int, perPage int, sort 
 
 	for _, image := range images {
 		entityImage := models.LoadImageModel(&image)
-
+		entityImage.Path = r.fileService.BuildUrl(entityImage.Path, 500, 500)
 		entityImages = append(entityImages, entityImage)
 	}
 

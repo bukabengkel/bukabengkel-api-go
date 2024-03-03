@@ -33,26 +33,24 @@ type Product struct {
 	DeletedAt        time.Time `bun:"deleted_at"`
 	DeletedBy        string    `bun:"deleted_by"`
 
-	Images []Image `bun:"rel:has-many,join:id=entity_id,join:type=entity_type,polymorphic"`
-	// Images   []Image          `bun:"-"`
+	Images   []Image          `bun:"rel:has-many,join:id=entity_id,join:type=entity_type,polymorphic"`
 	Store    *Store           `bun:"rel:belongs-to"`
+	Brand    *ProductBrand    `bun:"rel:belongs-to"`
 	Category *ProductCategory `bun:"rel:belongs-to"`
 }
 
 func LoadProductModel(p Product) *entity.Product {
 	return &entity.Product{
-		ID:          *p.ID,
-		Key:         p.Key,
-		Store:       LoadStoreModel(p.Store),
-		Category:    LoadProductCategoryModel(p.Category),
-		Name:        p.Name,
-		Slug:        p.Slug,
-		Description: p.Description,
-		Unit:        p.Unit,
-		Thumbnail: &entity.Image{
-			ID:   2,
-			Path: "hpppt12",
-		},
+		ID:               *p.ID,
+		Key:              p.Key,
+		Store:            LoadStoreModel(p.Store),
+		Brand:            LoadProductBrandModel(p.Brand),
+		Category:         LoadProductCategoryModel(p.Category),
+		Name:             p.Name,
+		Slug:             p.Slug,
+		Description:      p.Description,
+		Unit:             p.Unit,
+		Thumbnail:        &entity.Image{},
 		Images:           LoadImageModels(p.Images),
 		Price:            p.Price,
 		SellPrice:        p.SellPrice,

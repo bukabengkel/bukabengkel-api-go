@@ -42,8 +42,8 @@ func main() {
 	middleware := middleware.NewMiddleware(enfocer, appLogger, jwtService)
 
 	// Repositories
-	imageRepo := repository.NewImageRepository(db)
-	productRepo := repository.NewProductRepository(db, fileService, imageRepo)
+	imageRepo := repository.NewImageRepository(db, fileService)
+	productRepo := repository.NewProductRepository(db, imageRepo)
 
 	// Usecases
 	productUsecase := usecase.NewProductUsecase(productRepo)

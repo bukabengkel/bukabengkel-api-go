@@ -6,14 +6,12 @@ import (
 
 	"github.com/peang/bukabengkel-api-go/src/domain/entity"
 	"github.com/peang/bukabengkel-api-go/src/models"
-	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 	"github.com/uptrace/bun"
 )
 
 type ProductRepository struct {
 	db              *bun.DB
-	fileService     *file_service.S3Service
 	imageRepository *ImageRepository
 }
 
@@ -22,10 +20,9 @@ type ProductRepositoryFilter struct {
 	StoreID *int
 }
 
-func NewProductRepository(db *bun.DB, fileService *file_service.S3Service, imageRepository *ImageRepository) *ProductRepository {
+func NewProductRepository(db *bun.DB, imageRepository *ImageRepository) *ProductRepository {
 	return &ProductRepository{
 		db:              db,
-		fileService:     fileService,
 		imageRepository: imageRepository,
 	}
 }
@@ -52,6 +49,7 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 
 	count, err := sl.
 		Relation("Store").
+		Relation("Brand").
 		Relation("Category").
 		Limit(limit).Offset(offset).OrderExpr(sorts).ScanAndCount(context.TODO())
 	if err != nil {

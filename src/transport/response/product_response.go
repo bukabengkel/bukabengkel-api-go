@@ -7,6 +7,9 @@ import (
 // BuildingResponse represents building response payload
 type ProductResponse struct {
 	ID               string  `json:"id"`
+	Store            string  `json:"store"`
+	BrandID          *int64  `json:"brandId"`
+	BrandName        *string `json:"brandName"`
 	CategoryID       int64   `json:"categoryId"`
 	CategoryName     string  `json:"categoryName"`
 	Name             string  `json:"name"`
@@ -25,8 +28,9 @@ type ProductResponse struct {
 
 // BuildingDetailResponse transforms entity.Building to BuildingResponse
 func ProductDetailResponse(product *entity.Product) *ProductResponse {
-	return &ProductResponse{
+	response := &ProductResponse{
 		ID:               product.Key,
+		Store:            product.Store.Name,
 		CategoryID:       product.Category.ID,
 		CategoryName:     product.Category.Name,
 		Name:             product.Name,
@@ -42,6 +46,16 @@ func ProductDetailResponse(product *entity.Product) *ProductResponse {
 		Status:           int(product.Status),
 		StatusString:     product.Status.String(),
 	}
+
+	if product.Brand == nil {
+		response.BrandID = nil
+		response.BrandName = nil
+	} else {
+		response.BrandID = &product.Brand.ID
+		response.BrandName = &product.Brand.Name
+	}
+
+	return response
 }
 
 // BuildingListResponse transforms []entity.Building to []BuildingResponse

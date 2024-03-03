@@ -24,6 +24,7 @@ type Product struct {
 	ID               int64
 	Key              string
 	Store            *Store
+	Brand            *ProductBrand
 	Category         *ProductCategory
 	Name             string
 	Slug             string
