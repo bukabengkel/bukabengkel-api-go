@@ -33,7 +33,7 @@ func (r *ImageRepository) queryBuilder(query *bun.SelectQuery, cond ImageReposit
 	}
 
 	if cond.EntityType != nil {
-		query.Where("? = ?", bun.Ident("entity_type"), cond.EntityID)
+		query.Where("? = ?", bun.Ident("entity_type"), cond.EntityType)
 	}
 
 	return query
