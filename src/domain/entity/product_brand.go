@@ -2,7 +2,7 @@ package entity
 
 import "time"
 
-type ProductCategory struct {
+type ProductBrand struct {
 	ID          int64
 	StoreID     int64
 	Name        string

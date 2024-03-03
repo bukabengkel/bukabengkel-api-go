@@ -2,126 +2,85 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strings"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/peang/bukabengkel-api-go/src/domain/entity"
-	repo "github.com/peang/bukabengkel-api-go/src/domain/repositories"
-	"github.com/peang/bukabengkel-api-go/src/domain/services"
+	"github.com/peang/bukabengkel-api-go/src/models"
 	"github.com/peang/bukabengkel-api-go/src/utils"
+	"github.com/uptrace/bun"
 )
 
-type productPostgresRepository struct {
-	pool        *pgxpool.Pool
-	fileService services.FileServiceInterface
+type ProductRepository struct {
+	db              *bun.DB
+	imageRepository *ImageRepository
 }
 
-func NewProductRepository(pool *pgxpool.Pool, fileService services.FileServiceInterface) repo.ProductRepositoryInterface {
-	return &productPostgresRepository{
-		pool:        pool,
-		fileService: fileService,
+type ProductRepositoryFilter struct {
+	Name    *string
+	StoreID *int
+}
+
+func NewProductRepository(db *bun.DB, imageRepository *ImageRepository) *ProductRepository {
+	return &ProductRepository{
+		db:              db,
+		imageRepository: imageRepository,
 	}
 }
 
-func (r *productPostgresRepository) List(ctx context.Context, page int, perPage int, sort string, filter repo.ProductRepositoryFilter) (products []*entity.Product, count int, err error) {
-	conn, err := r.pool.Acquire(ctx)
-	if err != nil {
-		return
+func (r *ProductRepository) queryBuilder(query *bun.SelectQuery, cond ProductRepositoryFilter) *bun.SelectQuery {
+	if cond.Name != nil {
+		query.Where("? ILIKE ?", bun.Ident("name"), fmt.Sprintf("%%%s%%", *cond.Name))
 	}
-	defer conn.Release()
 
+	if cond.StoreID != nil {
+		query.Where("? = ?", bun.Ident("product.store_id"), cond.StoreID)
+	}
+
+	return query
+}
+
+func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sort string, filter ProductRepositoryFilter) (*[]entity.Product, int, error) {
 	sorts := utils.GenerateSort(sort)
 	offset, limit := utils.GenerateOffsetLimit(page, perPage)
 
-	query := `
-		SELECT 
-			p.id, p.key, p.category_id, pc.name, p.name, p.slug, p.description, p.unit, p.price, p.sell_price, p.stock, p.stock_minimum, p.is_stock_unlimited, p.status, 
-			COALESCE(json_agg(im) FILTER (WHERE im.entity_id = p.id ), '[]') as images
-		FROM
-			product p
-			LEFT JOIN product_category pc ON p.category_id = pc.id
-			LEFT JOIN image im ON im.entity_id = p.id
-			`
+	var products []models.Product
+	sl := r.db.NewSelect().Model(&products)
+	sl = r.queryBuilder(sl, filter)
 
-	conditions := make([]string, 0)
-	conditions = append(conditions, fmt.Sprintf("p.store_id = %d ", filter.StoreID))
-	if filter.Name != "" {
-		conditions = append(conditions, fmt.Sprintf("p.name ilike '%%%s%%'", filter.Name))
-	}
-	if len(conditions) > 0 {
-		query += " WHERE " + strings.Join(conditions, " AND ")
-		query += " GROUP BY p.id, pc.name "
-	} else {
-		query += " GROUP BY p.id, pc.name "
-	}
-
-	query += fmt.Sprintf(" ORDER BY %s %s", sorts.Field, strings.ToUpper(sorts.Method))
-	query += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
-
-	fmt.Println(query)
-	var rows pgx.Rows
-	rows, err = conn.Query(ctx, query)
+	count, err := sl.
+		Relation("Store").
+		Relation("Brand").
+		Relation("Category").
+		Limit(limit).Offset(offset).OrderExpr(sorts).ScanAndCount(context.TODO())
 	if err != nil {
-		return
+		return nil, 0, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var images string
-		var productImages []entity.Image
-		var product entity.Product
+	if len(products) == 0 {
+		return &[]entity.Product{}, count, nil
+	}
 
-		err = rows.Scan(
-			&product.ID,
-			&product.Key,
-			&product.Category.ID,
-			&product.Category.Name,
-			&product.Name,
-			&product.Slug,
-			&product.Description,
-			&product.Unit,
-			&product.Price,
-			&product.SellPrice,
-			&product.Stock,
-			&product.StockMinimum,
-			&product.IsStockUnlimited,
-			&product.Status,
-			&images,
-		)
+	var entityProducts []entity.Product
+
+	for _, product := range products {
+		var thumbnail entity.Image
+		images, err := r.imageRepository.Find(ctx, 1, 5, "id", ImageRepositoryFilter{
+			EntityID:   product.ID,
+			EntityType: utils.Uint(1),
+		})
 		if err != nil {
-			return
+			return nil, 0, err
 		}
 
-		err = json.Unmarshal([]byte(images), &productImages)
-		if err != nil {
-			err = utils.NewInternalServerError(err)
-			return
+		if len(images) > 0 {
+			thumbnail = *images[0]
 		}
 
-		product.Images = productImages
-		if len(productImages) > 0 {
-			productImages[0].Path = r.fileService.BuildUrl(productImages[0].Path, 0, 0)
-			product.Thumbnail = productImages[0]
-		}
-		products = append(products, &product)
+		entityProduct := models.LoadProductModel(product)
+		entityProduct.Thumbnail = &thumbnail
+
+		entityProducts = append(entityProducts, *entityProduct)
 	}
 
-	if err = rows.Err(); err != nil {
-		return
-	}
-
-	countQuery := "SELECT COUNT(*) FROM product p LEFT JOIN image im ON im.entity_id = p.id"
-	if len(conditions) > 0 {
-		countQuery += " WHERE " + strings.Join(conditions, " AND ")
-	}
-
-	err = conn.QueryRow(ctx, countQuery).Scan(&count)
-	if err != nil {
-		return
-	}
-
-	return
+	return &entityProducts, count, nil
 }

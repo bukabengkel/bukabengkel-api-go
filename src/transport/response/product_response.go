@@ -7,7 +7,10 @@ import (
 // BuildingResponse represents building response payload
 type ProductResponse struct {
 	ID               string  `json:"id"`
-	CategoryID       int     `json:"categoryId"`
+	Store            string  `json:"store"`
+	BrandID          *int64  `json:"brandId"`
+	BrandName        *string `json:"brandName"`
+	CategoryID       int64   `json:"categoryId"`
 	CategoryName     string  `json:"categoryName"`
 	Name             string  `json:"name"`
 	Slug             string  `json:"slug"`
@@ -16,8 +19,8 @@ type ProductResponse struct {
 	Thumbnail        string  `json:"thumbnail"`
 	Price            float64 `json:"price"`
 	SellPrice        float64 `json:"sellPrice"`
-	Stock            int     `json:"stock"`
-	StockMinimum     int     `json:"stockMinimum"`
+	Stock            float64 `json:"stock"`
+	StockMinimum     float64 `json:"stockMinimum"`
 	IsStockUnlimited bool    `json:"isStockUnlimited"`
 	Status           int     `json:"status"`
 	StatusString     string  `json:"statusString"`
@@ -25,8 +28,9 @@ type ProductResponse struct {
 
 // BuildingDetailResponse transforms entity.Building to BuildingResponse
 func ProductDetailResponse(product *entity.Product) *ProductResponse {
-	return &ProductResponse{
+	response := &ProductResponse{
 		ID:               product.Key,
+		Store:            product.Store.Name,
 		CategoryID:       product.Category.ID,
 		CategoryName:     product.Category.Name,
 		Name:             product.Name,
@@ -42,13 +46,23 @@ func ProductDetailResponse(product *entity.Product) *ProductResponse {
 		Status:           int(product.Status),
 		StatusString:     product.Status.String(),
 	}
+
+	if product.Brand == nil {
+		response.BrandID = nil
+		response.BrandName = nil
+	} else {
+		response.BrandID = &product.Brand.ID
+		response.BrandName = &product.Brand.Name
+	}
+
+	return response
 }
 
 // BuildingListResponse transforms []entity.Building to []BuildingResponse
-func ProductListResponse(products []*entity.Product) []ProductResponse {
+func ProductListResponse(products *[]entity.Product) []ProductResponse {
 	var responses = make([]ProductResponse, 0)
-	for _, building := range products {
-		response := ProductDetailResponse(building)
+	for _, product := range *products {
+		response := ProductDetailResponse(&product)
 		responses = append(responses, *response)
 	}
 	return responses

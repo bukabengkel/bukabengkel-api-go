@@ -14,7 +14,7 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/handlers"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
-	"github.com/peang/bukabengkel-api-go/src/services"
+	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
 )
@@ -28,8 +28,7 @@ func main() {
 	appLogger.InitLogger()
 
 	// Setup Databse
-	db, err := config.NewPgxDatabase(configApp.DatabaseURL)
-	utils.PanicIfNeeded(err)
+	db := config.LoadDatabase(configApp)
 	defer db.Close()
 
 	// Setup Casbin Enfocer
@@ -38,13 +37,13 @@ func main() {
 
 	// services
 	jwtService := config.NewJWTService(configApp.JWTSecretKey, configApp.BaseURL)
-	fileService, err := services.NewFileService(configApp)
-	utils.PanicIfNeeded(err)
+	fileService := file_service.NewAWSS3Service(configApp)
 
 	middleware := middleware.NewMiddleware(enfocer, appLogger, jwtService)
 
 	// Repositories
-	productRepo := repository.NewProductRepository(db, fileService)
+	imageRepo := repository.NewImageRepository(db, fileService)
+	productRepo := repository.NewProductRepository(db, imageRepo)
 
 	// Usecases
 	productUsecase := usecase.NewProductUsecase(productRepo)
@@ -54,7 +53,7 @@ func main() {
 	e.Use(middleware.JWTAuth())
 
 	// handlers.NewPporfHandler(e, middleware)
-	handlers.NewHealthHandler(e, middleware)
+	// handlers.NewHealthHandler(e, middleware)
 	handlers.NewProductHandler(e, middleware, productUsecase)
 
 	defer func() {

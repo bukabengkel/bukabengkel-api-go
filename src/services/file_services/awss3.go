@@ -6,25 +6,25 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/config"
 )
 
-type awss3Service struct {
+type S3Service struct {
 	UseImageKit string
 	ImageKitUrl string
 	BaseURL     string
 }
 
-func NewAWSS3Service(config *config.Config) *awss3Service {
-	return &awss3Service{
+func NewAWSS3Service(config *config.Config) *S3Service {
+	return &S3Service{
 		UseImageKit: config.Storage.ImageKit,
 		ImageKitUrl: config.Storage.ImageKitURL,
 		BaseURL:     "https://bukabengkel.s3.ap-southeast-1.amazonaws.com",
 	}
 }
 
-func (s *awss3Service) GetBaseURL() string {
+func (s *S3Service) GetBaseURL() string {
 	return s.BaseURL
 }
 
-func (s *awss3Service) BuildUrl(path string, width int, height int) string {
+func (s *S3Service) BuildUrl(path string, width int, height int) string {
 	if s.UseImageKit == "true" {
 		if width != 0 && height != 0 {
 			return fmt.Sprintf("%s/%s?tr=w-%d,h-%d", s.ImageKitUrl, path, width, height)

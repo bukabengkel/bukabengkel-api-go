@@ -9,6 +9,7 @@ import (
 
 // Config ...
 type Config struct {
+	Env                  string
 	Port                 string
 	BaseURL              string
 	DatabaseURL          string
@@ -36,6 +37,7 @@ func LoadConfig() (config *Config) {
 		panic(err)
 	}
 
+	env := os.Getenv("ENV")
 	port := os.Getenv("APPLICATION_PORT")
 	baseURL := os.Getenv("BASE_URL")
 	databaseURL := os.Getenv("DATABASE_URL")
@@ -55,6 +57,7 @@ func LoadConfig() (config *Config) {
 	storageBucket := os.Getenv("STORAGE_BUCKET")
 
 	return &Config{
+		Env:                  env,
 		Port:                 port,
 		BaseURL:              baseURL,
 		DatabaseURL:          databaseURL,
