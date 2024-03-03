@@ -61,25 +61,35 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 	}
 
 	var entityProducts []entity.Product
+	var entityProductIds []*int64
+	for _, p := range products {
+		entityProduct := models.LoadProductModel(p)
 
-	for _, product := range products {
-		var thumbnail entity.Image
-		images, err := r.imageRepository.Find(ctx, 1, 5, "id", ImageRepositoryFilter{
-			EntityID:   product.ID,
-			EntityType: utils.Uint(1),
-		})
-		if err != nil {
-			return nil, 0, err
-		}
-
-		if len(images) > 0 {
-			thumbnail = *images[0]
-		}
-
-		entityProduct := models.LoadProductModel(product)
-		entityProduct.Thumbnail = &thumbnail
-
+		entityProductIds = append(entityProductIds, p.ID)
 		entityProducts = append(entityProducts, *entityProduct)
+	}
+
+	// var thumbnail entity.Image
+	images, err := r.imageRepository.Find(ctx, 1, 5, "id", ImageRepositoryFilter{
+		EntityIDS:  entityProductIds,
+		EntityType: utils.Uint(1),
+	})
+
+	if err == nil {
+		for key, p := range entityProducts {
+			var productImages []*entity.Image
+			for _, i := range images {
+				if p.ID == i.EntityId {
+					productImages = append(productImages, i)
+				}
+			}
+			p.Images = productImages
+			if len(productImages) > 0 {
+				p.Thumbnail = productImages[0]
+			}
+
+			entityProducts[key] = p
+		}
 	}
 
 	return &entityProducts, count, nil
