@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
-	repo "github.com/peang/bukabengkel-api-go/src/domain/repositories"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
+	repository "github.com/peang/bukabengkel-api-go/src/repositories"
 	"github.com/peang/bukabengkel-api-go/src/transport/response"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	"github.com/peang/bukabengkel-api-go/src/utils"
@@ -27,8 +27,7 @@ func NewProductHandler(
 
 	apiV1 := e.Group("/v1/products")
 	apiV1.GET("", handler.List, middleware.RBAC())
-
-	return
+	// apiV1.GET("", handler.List)
 }
 
 func (h *ProductHandler) List(ctx echo.Context) (err error) {
@@ -37,8 +36,8 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 		return ctx.JSON(utils.ParseHttpError(err))
 	}
 
-	filter := repo.ProductRepositoryFilter{
-		StoreID: storeId,
+	filter := repository.ProductRepositoryFilter{
+		StoreID: &storeId,
 	}
 
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
@@ -52,7 +51,8 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 	}
 
 	if ctx.QueryParam("keyword") != "" && len(ctx.QueryParam("keyword")) >= 3 {
-		filter.Name = ctx.QueryParam("keyword")
+		filter.Name = utils.String(ctx.QueryParam("keyword"))
+
 	}
 
 	// if ctx.QueryParam("status") != "" {

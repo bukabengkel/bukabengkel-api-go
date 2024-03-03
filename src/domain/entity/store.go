@@ -3,11 +3,11 @@ package entity
 import "time"
 
 type Store struct {
-	ID             int
+	ID             int64
 	Key            string
 	Name           string
 	Type           int
-	Location       Location
+	Location       *Location
 	LocationDetail string
 	Geolocation    struct {
 		Lat  float64

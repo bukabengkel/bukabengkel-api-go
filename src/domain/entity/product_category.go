@@ -3,8 +3,8 @@ package entity
 import "time"
 
 type ProductCategory struct {
-	ID          int
-	StoreID     int
+	ID          int64
+	StoreID     int64
 	Name        string
 	Description string
 	CreatedAt   time.Time

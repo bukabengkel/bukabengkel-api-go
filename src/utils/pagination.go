@@ -1,24 +1,15 @@
 package utils
 
-type Sort struct {
-	Field  string
-	Method string
-}
+import "fmt"
 
-func GenerateSort(str string) Sort {
-	order := Sort{}
-
+func GenerateSort(str string) string {
 	len := len(str)
 	flag := string(str[0])
 	if flag == "-" {
-		order.Method = "DESC"
-		order.Field = str[1:len]
+		return fmt.Sprintf("%v %v", str[1:len], "desc")
 	} else {
-		order.Method = "ASC"
-		order.Field = str[0:len]
+		return fmt.Sprintf("%v %v", str[0:len], "asc")
 	}
-
-	return order
 }
 
 func GenerateOffsetLimit(page, perPage int) (offset, limit int) {

@@ -21,15 +21,14 @@ func (t ImageType) String() string {
 }
 
 type Image struct {
-	ID           int       `json:"id"`
-	OwnerID      int       `json:"owner_id"`
-	EntityId     int       `json:"entity_id"`
-	EntityType   ImageType `json:"entity_type"`
-	FileName     string    `json:"file_name"`
-	OriginalName string    `json:"original_name"`
-	Extension    string    `json:"extension"`
-	Path         string    `json:"path"`
-	Size         int       `json:"size"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID           int64
+	EntityId     int64
+	EntityType   ImageType
+	FileName     string
+	OriginalName string
+	Extension    string
+	Path         string
+	Size         int
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }

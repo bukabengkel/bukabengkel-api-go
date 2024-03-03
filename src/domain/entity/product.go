@@ -21,22 +21,22 @@ func (s ProductStatus) String() string {
 }
 
 type Product struct {
-	ID               int
+	ID               int64
 	Key              string
-	Store            Store
-	Category         ProductCategory
+	Store            *Store
+	Category         *ProductCategory
 	Name             string
 	Slug             string
 	Description      string
 	Unit             string
-	Thumbnail        Image
-	Images           []Image
+	Thumbnail        *Image
+	Images           *[]Image
 	Price            float64
 	SellPrice        float64
-	Stock            int
-	StockReserved    int
-	StockValue       int
-	StockMinimum     int
+	Stock            float64
+	StockReserved    float64
+	StockValue       float64
+	StockMinimum     float64
 	IsStockUnlimited bool
 	Status           ProductStatus
 	CreatedAt        time.Time

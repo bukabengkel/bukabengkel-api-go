@@ -1,23 +1,28 @@
 package config
 
 import (
-	"context"
-	"log"
+	"database/sql"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/extra/bundebug"
 )
 
-// NewPgxPool returns a new connection pool to the provided PostgreSQL database
-func NewPgxDatabase(databaseURL string) (db *pgxpool.Pool, err error) {
-	config, err := pgxpool.ParseConfig(databaseURL)
-	if err != nil {
-		panic(err)
+func LoadDatabase(c *Config) *bun.DB {
+	pgconn := pgdriver.NewConnector(
+		pgdriver.WithDSN(c.DatabaseURL),
+	)
+
+	sqldb := sql.OpenDB(pgconn)
+
+	db := bun.NewDB(sqldb, pgdialect.New())
+	if c.Env != "production" {
+		db.AddQueryHook(bundebug.NewQueryHook(
+			bundebug.WithVerbose(true),
+			bundebug.FromEnv("BUNDEBUG"),
+		))
 	}
 
-	pool, err := pgxpool.ConnectConfig(context.Background(), config)
-	if err != nil {
-		log.Fatalf("error connecting to database: %v", err)
-	}
-
-	return pool, err
+	return db
 }
