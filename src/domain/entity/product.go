@@ -31,7 +31,7 @@ type Product struct {
 	Description      string
 	Unit             string
 	Thumbnail        *Image
-	Images           *[]Image
+	Images           []*Image
 	Price            float64
 	SellPrice        float64
 	Stock            float64

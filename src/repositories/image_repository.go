@@ -17,6 +17,7 @@ type ImageRepository struct {
 
 type ImageRepositoryFilter struct {
 	EntityID   *int64
+	EntityIDS  []*int64
 	EntityType *uint
 }
 
@@ -30,6 +31,10 @@ func NewImageRepository(db *bun.DB, fileService *file_service.S3Service) *ImageR
 func (r *ImageRepository) queryBuilder(query *bun.SelectQuery, cond ImageRepositoryFilter) *bun.SelectQuery {
 	if cond.EntityID != nil {
 		query.Where("? = ?", bun.Ident("entity_id"), cond.EntityID)
+	}
+
+	if cond.EntityIDS != nil {
+		query.Where("? IN (?)", bun.Ident("entity_id"), bun.In(cond.EntityIDS))
 	}
 
 	if cond.EntityType != nil {

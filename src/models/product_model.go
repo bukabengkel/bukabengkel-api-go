@@ -51,7 +51,6 @@ func LoadProductModel(p Product) *entity.Product {
 		Description:      p.Description,
 		Unit:             p.Unit,
 		Thumbnail:        &entity.Image{},
-		Images:           LoadImageModels(p.Images),
 		Price:            p.Price,
 		SellPrice:        p.SellPrice,
 		Stock:            p.Stock,
