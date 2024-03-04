@@ -29,7 +29,7 @@ func NewProductRepository(db *bun.DB, imageRepository *ImageRepository) *Product
 
 func (r *ProductRepository) queryBuilder(query *bun.SelectQuery, cond ProductRepositoryFilter) *bun.SelectQuery {
 	if cond.Name != nil {
-		query.Where("? ILIKE ?", bun.Ident("name"), fmt.Sprintf("%%%s%%", *cond.Name))
+		query.Where("? ILIKE ?", bun.Ident("product.name"), fmt.Sprintf("%%%s%%", *cond.Name))
 	}
 
 	if cond.StoreID != nil {
@@ -69,7 +69,6 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 		entityProducts = append(entityProducts, *entityProduct)
 	}
 
-	// var thumbnail entity.Image
 	images, err := r.imageRepository.Find(ctx, 1, 5, "id", ImageRepositoryFilter{
 		EntityIDS:  entityProductIds,
 		EntityType: utils.Uint(1),
