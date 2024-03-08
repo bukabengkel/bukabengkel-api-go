@@ -7,9 +7,9 @@ import (
 type ProductResponse struct {
 	ID               string  `json:"id"`
 	Store            string  `json:"store"`
-	BrandID          *int64  `json:"brandId"`
+	BrandID          *uint64 `json:"brandId"`
 	BrandName        *string `json:"brandName"`
-	CategoryID       int64   `json:"categoryId"`
+	CategoryID       uint64  `json:"categoryId"`
 	CategoryName     string  `json:"categoryName"`
 	Name             string  `json:"name"`
 	Slug             string  `json:"slug"`

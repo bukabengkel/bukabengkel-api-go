@@ -15,8 +15,8 @@ type ImageRepository struct {
 }
 
 type ImageRepositoryFilter struct {
-	EntityID   *int64
-	EntityIDS  []*int64
+	EntityID   *uint64
+	EntityIDS  []*uint64
 	EntityType *uint
 }
 

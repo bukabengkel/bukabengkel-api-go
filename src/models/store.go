@@ -14,11 +14,11 @@ type Geolocation struct {
 type Store struct {
 	bun.BaseModel `bun:"table:store"`
 
-	ID             *int64      `bun:"id,pk"`
+	ID             *uint64     `bun:"id,pk"`
 	Key            string      `bun:"key,notnull,unique"`
 	Name           string      `bun:"name,notnull"`
-	Type           int         `bun:"type,notnull"`
-	LocationID     *int64      `bun:"location_id,notnull"`
+	Type           uint        `bun:"type,notnull"`
+	LocationID     *uint64     `bun:"location_id,notnull"`
 	Location       *Location   `bun:"rel:belongs-to,join:location_id=id"`
 	LocationDetail string      `bun:"location_detail"`
 	Geolocation    Geolocation `bun:"geolocation"`

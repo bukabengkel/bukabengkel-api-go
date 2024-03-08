@@ -65,7 +65,7 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 	}
 
 	var entityProducts []models.Product
-	var entityProductIds []*int64
+	var entityProductIds []*uint64
 	for _, p := range products {
 		// entityProduct := models.LoadProductModel(p)
 

@@ -27,10 +27,10 @@ func (t ImageType) String() string {
 type Image struct {
 	bun.BaseModel `bun:"table:image"`
 
-	ID           *int64    `bun:"id,pk"`
-	OwnerID      int64     `bun:"owner_id,notnull"`
-	EntityID     int64     `bun:"entity_id,notnull"`
-	EntityType   int64     `bun:"entity_type,notnull"`
+	ID           *uint64   `bun:"id,pk"`
+	OwnerID      uint64    `bun:"owner_id,notnull"`
+	EntityID     uint64    `bun:"entity_id,notnull"`
+	EntityType   uint64    `bun:"entity_type,notnull"`
 	FileName     string    `bun:"file_name,notnull"`
 	OriginalName string    `bun:"original_name,notnull"`
 	Extension    string    `bun:"extension,notnull"`

@@ -27,10 +27,10 @@ func (s ProductStatus) String() string {
 type Product struct {
 	bun.BaseModel `bun:"table:product"`
 
-	ID               *int64        `bun:"id,pk"`
+	ID               *uint64       `bun:"id,pk"`
 	Key              string        `bun:"key,notnull,unique"`
-	StoreID          int64         `bun:"store_id,notnull"`
-	CategoryID       int64         `bun:"category_id,notnull"`
+	StoreID          uint64        `bun:"store_id,notnull"`
+	CategoryID       uint64        `bun:"category_id,notnull"`
 	Name             string        `bun:"name,notnull"`
 	Slug             string        `bun:"slug,notnull,unique"`
 	Description      string        `bun:"description,notnull"`

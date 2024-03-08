@@ -9,8 +9,8 @@ import (
 type ProductCategory struct {
 	bun.BaseModel `bun:"table:product_category"`
 
-	ID          *int64    `bun:"id,pk"`
-	StoreID     int64     `bun:"store_id,notnull"`
+	ID          *uint64   `bun:"id,pk"`
+	StoreID     uint64    `bun:"store_id,notnull"`
 	Name        string    `bun:"name,notnull"`
 	Description string    `bun:"description"`
 	CreatedAt   time.Time `bun:"created_at,notnull"`

@@ -9,7 +9,7 @@ import (
 type Location struct {
 	bun.BaseModel `bun:"table:location"`
 
-	ID        *int64    `bun:"id,pk"`
+	ID        *uint64   `bun:"id,pk"`
 	Province  string    `bun:"province,notnull"`
 	City      string    `bun:"city,notnull"`
 	District  string    `bun:"district,notnull"`
