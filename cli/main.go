@@ -6,7 +6,6 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/cmd"
 	"github.com/peang/bukabengkel-api-go/src/config"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
-	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 
 	// file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 
@@ -35,16 +34,17 @@ func main() {
 	defer db.Close()
 
 	// services
-	fileService := file_service.NewAWSS3Service(configApp)
+	// fileService := file_service.NewAWSS3Service(configApp)
 
 	// Repositories
-	imageRepo := repository.NewImageRepository(db, fileService)
-	productRepo := repository.NewProductRepository(db, imageRepo)
+	// imageRepo := repository.NewImageRepository(db, fileService)
+	// productRepo := repository.NewProductRepository(db, imageRepo)
+	productCategoryDistributorRepo := repository.NewProductCategoryDistributorRepository(db)
 
 	// Usecases
 	// productUsecase := usecase.NewProductUsecase(productRepo)
 
-	commands := Register(productRepo)
+	commands := Register(productCategoryDistributorRepo)
 
 	// rootCmd.AddCommand(cmd.SyncAsianCmd)
 
@@ -52,7 +52,7 @@ func main() {
 }
 
 func Register(
-	productRepo *repository.ProductRepository,
+	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository,
 ) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "",
@@ -62,7 +62,7 @@ func Register(
 		},
 	}
 
-	asian := cmd.NewSyncAsian(productRepo)
+	asian := cmd.NewSyncAsian(productCategoryDistributorRepo)
 	syncAsianCmd := &cobra.Command{
 		Use:   "sync-asian",
 		Short: "Sync Asian Products",

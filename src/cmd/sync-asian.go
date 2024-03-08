@@ -8,14 +8,14 @@ import (
 )
 
 type SyncAsian struct {
-	productRepo *repository.ProductRepository
+	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository
 }
 
 func NewSyncAsian(
-	productRepo *repository.ProductRepository,
+	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository,
 ) *SyncAsian {
 	return &SyncAsian{
-		productRepo: productRepo,
+		productCategoryDistributorRepo: productCategoryDistributorRepo,
 	}
 }
 
