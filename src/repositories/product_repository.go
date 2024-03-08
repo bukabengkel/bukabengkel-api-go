@@ -67,8 +67,6 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 	var entityProducts []models.Product
 	var entityProductIds []*uint64
 	for _, p := range products {
-		// entityProduct := models.LoadProductModel(p)
-
 		entityProductIds = append(entityProductIds, p.ID)
 		entityProducts = append(entityProducts, p)
 	}
@@ -87,10 +85,6 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 				}
 			}
 			p.Images = productImages
-			// if len(productImages) > 0 {
-			// 	p. = productImages[0]
-			// }
-
 			entityProducts[key] = p
 		}
 	}

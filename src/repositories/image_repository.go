@@ -91,11 +91,7 @@ func (r *ImageRepository) FindAndCount(ctx context.Context, page int, perPage in
 
 	var entityImages []models.Image
 
-	for _, image := range images {
-		// entityImage := models.LoadImageModel(&image)
-
-		entityImages = append(entityImages, image)
-	}
+	entityImages = append(entityImages, images...)
 
 	return &entityImages, count, nil
 }
