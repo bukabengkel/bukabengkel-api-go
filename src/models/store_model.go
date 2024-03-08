@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	"github.com/peang/bukabengkel-api-go/src/domain/entity"
 	"github.com/uptrace/bun"
 )
 
@@ -29,26 +28,4 @@ type Store struct {
 	UpdatedBy      string      `bun:"updated_by"`
 	DeletedAt      time.Time   `bun:"deleted_at"`
 	DeletedBy      string      `bun:"deleted_by"`
-}
-
-func LoadStoreModel(s *Store) *entity.Store {
-	if s != nil {
-		return &entity.Store{
-			ID:             *s.ID,
-			Key:            s.Key,
-			Name:           s.Name,
-			Type:           s.Type,
-			Location:       LoadLocationModel(s.Location),
-			LocationDetail: s.LocationDetail,
-			Geolocation:    s.Geolocation,
-			CreatedAt:      s.CreatedAt,
-			CreatedBy:      s.CreatedBy,
-			UpdatedAt:      s.UpdatedAt,
-			UpdatedBy:      s.UpdatedBy,
-			DeletedAt:      s.DeletedAt,
-			DeletedBy:      s.DeletedBy,
-		}
-	}
-
-	return nil
 }

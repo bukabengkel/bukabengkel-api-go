@@ -52,8 +52,6 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())
 
-	// handlers.NewPporfHandler(e, middleware)
-	// handlers.NewHealthHandler(e, middleware)
 	handlers.NewProductHandler(e, middleware, productUsecase)
 
 	defer func() {
@@ -63,15 +61,12 @@ func main() {
 		}
 	}()
 
-	// Start server
 	go func() {
 		if err := e.Start(fmt.Sprintf(":%s", configApp.Port)); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal(err)
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
-	// Use a buffered channel to avoid missing signals as recommended for signal.Notify
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit

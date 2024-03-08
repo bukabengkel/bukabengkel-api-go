@@ -3,9 +3,26 @@ package models
 import (
 	"time"
 
-	"github.com/peang/bukabengkel-api-go/src/domain/entity"
 	"github.com/uptrace/bun"
 )
+
+type ImageType int
+
+const (
+	ImageProductType      ImageType = 1
+	ImageProfileImageType ImageType = 2
+)
+
+func (t ImageType) String() string {
+	switch t {
+	case ImageProductType:
+		return "product"
+	case ImageProfileImageType:
+		return "profile_image"
+	default:
+		return "unknown"
+	}
+}
 
 type Image struct {
 	bun.BaseModel `bun:"table:image"`
@@ -21,46 +38,4 @@ type Image struct {
 	Size         int       `bun:"size,notnull"`
 	CreatedAt    time.Time `bun:"created_at"`
 	UpdatedAt    time.Time `bun:"updated_at"`
-}
-
-func LoadImageModel(i *Image) *entity.Image {
-	if i != nil {
-		return &entity.Image{
-			ID:           *i.ID,
-			EntityId:     i.EntityID,
-			EntityType:   entity.ImageType(i.EntityType),
-			FileName:     i.FileName,
-			OriginalName: i.OriginalName,
-			Extension:    i.Extension,
-			Path:         i.Path,
-			Size:         i.Size,
-			CreatedAt:    i.CreatedAt,
-			UpdatedAt:    i.UpdatedAt,
-		}
-	}
-
-	return nil
-}
-
-func LoadImageModels(i []Image) *[]entity.Image {
-	var entityImages []entity.Image
-
-	for _, i := range i {
-		entityImage := entity.Image{
-			ID:           *i.ID,
-			EntityId:     i.EntityID,
-			EntityType:   entity.ImageType(i.EntityType),
-			FileName:     i.FileName,
-			OriginalName: i.OriginalName,
-			Extension:    i.Extension,
-			Path:         i.Path,
-			Size:         i.Size,
-			CreatedAt:    i.CreatedAt,
-			UpdatedAt:    i.UpdatedAt,
-		}
-
-		entityImages = append(entityImages, entityImage)
-	}
-
-	return &entityImages
 }
