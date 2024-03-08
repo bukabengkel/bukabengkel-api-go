@@ -27,7 +27,6 @@ func NewProductHandler(
 
 	apiV1 := e.Group("/v1/products")
 	apiV1.GET("", handler.List, middleware.RBAC())
-	// apiV1.GET("", handler.List)
 }
 
 func (h *ProductHandler) List(ctx echo.Context) (err error) {
@@ -37,7 +36,7 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 	}
 
 	filter := repository.ProductRepositoryFilter{
-		StoreID: &storeId,
+		StoreID: utils.IntToInt64(storeId),
 	}
 
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
