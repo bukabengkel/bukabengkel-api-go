@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/peang/bukabengkel-api-go/src/models"
@@ -15,7 +16,9 @@ type ProductDistributorRepository struct {
 }
 
 type ProductDistributorRepositoryFilter struct {
-	Name *string
+	DistributorID *uint64
+	Name          *string
+	Code          *string
 }
 
 func NewProductDistributorRepository(db *bun.DB, imageRepository *ImageRepository) *ProductDistributorRepository {
@@ -25,9 +28,17 @@ func NewProductDistributorRepository(db *bun.DB, imageRepository *ImageRepositor
 	}
 }
 
-func (r *ProductDistributorRepository) queryBuilder(query *bun.SelectQuery, cond ProductDistributorRepositoryFilter) *bun.SelectQuery {
-	if cond.Name != nil {
-		query.Where("? ILIKE ?", bun.Ident("product_distributor.name"), fmt.Sprintf("%%%s%%", *cond.Name))
+func (r *ProductDistributorRepository) queryBuilder(query *bun.SelectQuery, filter ProductDistributorRepositoryFilter) *bun.SelectQuery {
+	if filter.DistributorID != nil {
+		query.Where("? = ?", bun.Ident("distributor_id"), filter.DistributorID)
+	}
+
+	if filter.Name != nil {
+		query.Where("? ILIKE ?", bun.Ident("name"), fmt.Sprintf("%%%s%%", *filter.Name))
+	}
+
+	if filter.Code != nil {
+		query.Where("? = ?", bun.Ident("code"), filter.Code)
 	}
 
 	return query
@@ -56,4 +67,36 @@ func (r *ProductDistributorRepository) List(ctx context.Context, page int, perPa
 	entityProducts = append(entityProducts, products...)
 
 	return &entityProducts, count, nil
+}
+
+func (r *ProductDistributorRepository) Save(product *models.ProductDistributor) (*models.ProductDistributor, error) {
+	_, err := r.db.NewInsert().Model(product).Returning("id").Exec(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.db.NewSelect().Model(product).WherePK().Scan(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
+func (r *ProductDistributorRepository) FindOne(filter ProductDistributorRepositoryFilter) (*models.ProductDistributor, error) {
+	var product models.ProductDistributor
+
+	sl := r.db.NewSelect().Model(&product)
+	sl = r.queryBuilder(sl, filter)
+
+	err := sl.Scan(context.TODO())
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
+	return &product, nil
 }
