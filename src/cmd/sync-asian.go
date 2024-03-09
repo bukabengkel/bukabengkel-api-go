@@ -193,8 +193,7 @@ func (s *SyncAsian) syncProduct(cat uint) {
 				weight, _ := strconv.Atoi(product.Weight)
 				volume, _ := strconv.Atoi(product.Volume)
 
-				s.productDistributorRepo.
-					newProductDistributor := models.ProductDistributor{
+				newProductDistributor := models.ProductDistributor{
 					ExternalID:       strconv.Itoa(int(product.ID)),
 					Key:              uuid.NewString(),
 					DistributorID:    1,
