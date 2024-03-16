@@ -89,19 +89,29 @@ func NewSyncAsian(
 }
 
 func (s *SyncAsian) Execute(cmd *cobra.Command, args []string) {
-	// s.productCategoryDistributorRepo.UpdateWithCondition(
-	// 	repository.ProductCategoryDistributorRepositoryFilter{
-	// 		DistributorID: utils.Uint64(1),
-	// 	},
-	// 	repository.ProductCategoryDistributorRepositoryValues{
-	// 		RemoteUpdate: utils.Boolean(false),
-	// 	},
-	// )
+	s.productCategoryDistributorRepo.UpdateWithCondition(
+		repository.ProductCategoryDistributorRepositoryFilter{
+			DistributorID: utils.Uint64(1),
+		},
+		repository.ProductCategoryDistributorRepositoryValues{
+			RemoteUpdate: utils.Boolean(false),
+		},
+	)
+
+	s.productDistributorRepo.UpdateWithCondition(
+		repository.ProductDistributorRepositoryFilter{
+			DistributorID: utils.Uint64(1),
+		},
+		repository.ProductDistributorRepositoryValues{
+			RemoteUpdate: utils.Boolean(false),
+		},
+	)
 
 	s.syncCategory(1)
 	s.syncCategory(2)
 
 	s.syncProduct(1)
+	s.syncProduct(2)
 }
 
 func (s *SyncAsian) syncCategory(cat uint) {
@@ -156,7 +166,7 @@ func (s *SyncAsian) syncProduct(cat uint) {
 	var page uint
 	hasResult := true
 	for hasResult {
-		resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/product/%v?page=%v", cat, page), "GET", 5)
+		resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/product/%v?page=%v&per_page=50", cat, page), "GET", 5)
 		if err != nil {
 			log.Fatalf("Failed to Fetch %v", err)
 		}
@@ -173,7 +183,7 @@ func (s *SyncAsian) syncProduct(cat uint) {
 		}
 
 		var wg sync.WaitGroup
-		wg.Add(len(response.Content.Data))
+		wg.Add(len(response.Content.Data / 2))
 
 		for _, product := range response.Content.Data {
 			go func(product Product) {
@@ -259,6 +269,7 @@ func (s *SyncAsian) syncProduct(cat uint) {
 					p.Unit = product.Unit
 					p.Stock = float64(product.AvailableQty)
 					p.Price = float64(product.BasePrice)
+					p.RemoteUpdate = true
 
 					s.productDistributorRepo.Update(p)
 				}
@@ -266,6 +277,7 @@ func (s *SyncAsian) syncProduct(cat uint) {
 		}
 
 		wg.Wait()
+		time.Sleep(1 * time.Second)
 		page++
 	}
 }

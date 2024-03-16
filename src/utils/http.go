@@ -13,6 +13,7 @@ func HttpGetWithRetry(url string, method string, retry uint) ([]byte, error) {
 	backoff := 1 * time.Second
 
 	for retries < maxRetries {
+		fmt.Println(url)
 		resp, err := http.Get(url)
 		if err != nil {
 			retries++

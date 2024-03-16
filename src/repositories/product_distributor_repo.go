@@ -21,6 +21,10 @@ type ProductDistributorRepositoryFilter struct {
 	Code          *string
 }
 
+type ProductDistributorRepositoryValues struct {
+	RemoteUpdate *bool
+}
+
 func NewProductDistributorRepository(db *bun.DB, imageRepository *ImageRepository) *ProductDistributorRepository {
 	return &ProductDistributorRepository{
 		db:              db,
@@ -39,6 +43,22 @@ func (r *ProductDistributorRepository) queryBuilder(query *bun.SelectQuery, filt
 
 	if filter.Code != nil {
 		query.Where("? = ?", bun.Ident("code"), filter.Code)
+	}
+
+	return query
+}
+
+func (r *ProductDistributorRepository) updateQueryBuilder(
+	query *bun.UpdateQuery,
+	filter ProductDistributorRepositoryFilter,
+	values ProductDistributorRepositoryValues,
+) *bun.UpdateQuery {
+	if filter.DistributorID != nil {
+		query.Where("? = ?", bun.Ident("distributor_id"), filter.DistributorID)
+	}
+
+	if values.RemoteUpdate != nil {
+		query.Set("? = ?", bun.Ident("remote_update"), values.RemoteUpdate)
 	}
 
 	return query
@@ -90,6 +110,25 @@ func (r *ProductDistributorRepository) Update(product *models.ProductDistributor
 	}
 
 	return product, nil
+}
+
+func (r *ProductDistributorRepository) UpdateWithCondition(filter ProductDistributorRepositoryFilter, values ProductDistributorRepositoryValues) (int64, error) {
+	var product models.ProductDistributor
+
+	sl := r.db.NewUpdate().Model(&product)
+	sl = r.updateQueryBuilder(sl, filter, values)
+
+	res, err := sl.Exec(context.TODO())
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (r *ProductDistributorRepository) FindOne(filter ProductDistributorRepositoryFilter) (*models.ProductDistributor, error) {
