@@ -259,6 +259,8 @@ func (s *SyncAsian) syncProduct(cat uint) {
 					p.Unit = product.Unit
 					p.Stock = float64(product.AvailableQty)
 					p.Price = float64(product.BasePrice)
+
+					s.productDistributorRepo.Update(p)
 				}
 			}(product)
 		}

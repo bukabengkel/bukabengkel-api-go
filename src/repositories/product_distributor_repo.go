@@ -83,6 +83,15 @@ func (r *ProductDistributorRepository) Save(product *models.ProductDistributor) 
 	return product, nil
 }
 
+func (r *ProductDistributorRepository) Update(product *models.ProductDistributor) (*models.ProductDistributor, error) {
+	_, err := r.db.NewUpdate().Model(product).Where("id = ?", product.ID).Exec(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
 func (r *ProductDistributorRepository) FindOne(filter ProductDistributorRepositoryFilter) (*models.ProductDistributor, error) {
 	var product models.ProductDistributor
 
