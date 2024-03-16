@@ -7,7 +7,6 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
-	"github.com/uptrace/bun/extra/bundebug"
 )
 
 func LoadDatabase(c *Config) *bun.DB {
@@ -23,10 +22,10 @@ func LoadDatabase(c *Config) *bun.DB {
 		sqldb.SetMaxOpenConns(maxOpenConns)
 		sqldb.SetMaxIdleConns(maxOpenConns)
 	} else {
-		db.AddQueryHook(bundebug.NewQueryHook(
-			bundebug.WithVerbose(true),
-			bundebug.FromEnv("BUNDEBUG"),
-		))
+		// db.AddQueryHook(bundebug.NewQueryHook(
+		// 	bundebug.WithVerbose(true),
+		// 	bundebug.FromEnv("BUNDEBUG"),
+		// ))
 	}
 
 	return db

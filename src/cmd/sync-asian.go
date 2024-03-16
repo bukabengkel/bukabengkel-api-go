@@ -223,12 +223,18 @@ func (s *SyncAsian) syncProduct(cat uint) {
 
 					weight, _ := strconv.ParseFloat(product.Weight, 64)
 					volume, _ := strconv.ParseFloat(product.Volume, 64)
-					img, err := s.s3service.Upload(models.ImageProductCategory, product.Images)
-					if err != nil {
-						log.Fatal(err)
-						fmt.Printf("Skipping %v, Error Uploading to S3", product.Name)
-						errorCount++
-						return
+					var img file_service.S3UploadResponse
+					if product.Images != "" {
+						imgPtr, err := s.s3service.Upload(models.ImageProductCategory, product.Images)
+						img = *imgPtr
+						if err != nil {
+							log.Fatal(err)
+							fmt.Printf("Skipping %v, Error Uploading to S3", product.Name)
+							errorCount++
+							return
+						}
+					} else {
+						img.Key = ""
 					}
 
 					var bulkPrice []models.ProductBulkPrice
@@ -262,7 +268,14 @@ func (s *SyncAsian) syncProduct(cat uint) {
 						RemoteUpdate:     true,
 					}
 
-					s.productDistributorRepo.Save(&newProductDistributor)
+					_, err = s.productDistributorRepo.Save(&newProductDistributor)
+					if err != nil {
+						log.Fatal(err)
+						fmt.Printf("Skipping %v, Error Inserting", product.Name)
+						errorCount++
+						return
+					}
+
 				} else {
 					p.Name = product.Name
 					p.Code = product.Code
@@ -271,13 +284,19 @@ func (s *SyncAsian) syncProduct(cat uint) {
 					p.Price = float64(product.BasePrice)
 					p.RemoteUpdate = true
 
-					s.productDistributorRepo.Update(p)
+					_, err := s.productDistributorRepo.Update(p)
+					if err != nil {
+						log.Fatal(err)
+						fmt.Printf("Skipping %v, Error Updating", product.Name)
+						errorCount++
+						return
+					}
 				}
 			}(product)
 		}
 
 		wg.Wait()
-		time.Sleep(1 * time.Second)
+		// time.Sleep(1 * time.Second)
 		page++
 	}
 }
