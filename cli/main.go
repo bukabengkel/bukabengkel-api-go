@@ -32,10 +32,10 @@ func main() {
 	defer db.Close()
 
 	// services
-	fileService := file_service.NewAWSS3Service(configApp)
+	s3service := file_service.NewAWSS3Service(configApp)
 
 	// Repositories
-	imageRepo := repository.NewImageRepository(db, fileService)
+	imageRepo := repository.NewImageRepository(db, s3service)
 	// productRepo := repository.NewProductRepository(db, imageRepo)
 	productDistributorRepo := repository.NewProductDistributorRepository(db, imageRepo)
 	productCategoryDistributorRepo := repository.NewProductCategoryDistributorRepository(db)
@@ -43,12 +43,14 @@ func main() {
 	// Usecases
 	// productUsecase := usecase.NewProductUsecase(productRepo)
 
-	Register(productDistributorRepo, productCategoryDistributorRepo)
+	Register(productDistributorRepo, productCategoryDistributorRepo, imageRepo, s3service)
 }
 
 func Register(
 	productDistributorRepo *repository.ProductDistributorRepository,
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository,
+	imageRepo *repository.ImageRepository,
+	s3service *file_service.S3Service,
 ) {
 	rootCmd := &cobra.Command{
 		Use:   "",
@@ -58,7 +60,7 @@ func Register(
 		},
 	}
 
-	asian := cmd.NewSyncAsian(productDistributorRepo, productCategoryDistributorRepo)
+	asian := cmd.NewSyncAsian(productDistributorRepo, productCategoryDistributorRepo, imageRepo, s3service)
 	syncAsianCmd := &cobra.Command{
 		Use:   "sync-asian",
 		Short: "Sync Asian Products",

@@ -10,8 +10,8 @@ import (
 )
 
 type ImageRepository struct {
-	db          *bun.DB
-	fileService *file_service.S3Service
+	db        *bun.DB
+	s3Service *file_service.S3Service
 }
 
 type ImageRepositoryFilter struct {
@@ -20,10 +20,10 @@ type ImageRepositoryFilter struct {
 	EntityType *uint
 }
 
-func NewImageRepository(db *bun.DB, fileService *file_service.S3Service) *ImageRepository {
+func NewImageRepository(db *bun.DB, s3Service *file_service.S3Service) *ImageRepository {
 	return &ImageRepository{
-		db:          db,
-		fileService: fileService,
+		db:        db,
+		s3Service: s3Service,
 	}
 }
 
@@ -64,7 +64,7 @@ func (r *ImageRepository) Find(ctx context.Context, page int, perPage int, sort 
 
 	for _, image := range images {
 		// entityImage := models.LoadImageModel(&image)
-		image.Path = r.fileService.BuildUrl(image.Path, 500, 500)
+		image.Path = r.s3Service.BuildUrl(image.Path, 500, 500)
 		entityImages = append(entityImages, &image)
 	}
 

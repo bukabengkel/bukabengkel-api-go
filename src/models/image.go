@@ -13,6 +13,10 @@ const (
 	ImageProfileImageType ImageType = 2
 )
 
+const (
+	ImageProductCategory = "products"
+)
+
 func (t ImageType) String() string {
 	switch t {
 	case ImageProductType:

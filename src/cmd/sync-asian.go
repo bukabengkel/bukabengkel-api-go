@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/peang/bukabengkel-api-go/src/models"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
+	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 	"github.com/spf13/cobra"
 )
@@ -68,15 +70,21 @@ type Meta struct {
 type SyncAsian struct {
 	productDistributorRepo         *repository.ProductDistributorRepository
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository
+	imageRepo                      *repository.ImageRepository
+	s3service                      *file_service.S3Service
 }
 
 func NewSyncAsian(
 	productDistributorRepo *repository.ProductDistributorRepository,
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository,
+	imageRepo *repository.ImageRepository,
+	s3service *file_service.S3Service,
 ) *SyncAsian {
 	return &SyncAsian{
 		productDistributorRepo:         productDistributorRepo,
 		productCategoryDistributorRepo: productCategoryDistributorRepo,
+		imageRepo:                      imageRepo,
+		s3service:                      s3service,
 	}
 }
 
@@ -90,8 +98,8 @@ func (s *SyncAsian) Execute(cmd *cobra.Command, args []string) {
 	// 	},
 	// )
 
-	// s.syncCategory(1)
-	// s.syncCategory(2)
+	s.syncCategory(1)
+	s.syncCategory(2)
 
 	s.syncProduct(1)
 }
@@ -164,64 +172,98 @@ func (s *SyncAsian) syncProduct(cat uint) {
 			break
 		}
 
+		var wg sync.WaitGroup
+		wg.Add(len(response.Content.Data))
+
 		for _, product := range response.Content.Data {
-			p, err := s.productDistributorRepo.FindOne(repository.ProductDistributorRepositoryFilter{
-				DistributorID: utils.Uint64(1),
-				Code:          &product.Code,
-			})
+			go func(product Product) {
+				defer wg.Done()
 
-			if err != nil {
-				log.Fatal(err)
-				fmt.Printf("Skipping %v", product.Name)
-				errorCount++
-				continue
-			}
-
-			if p == nil {
-				cat, err := s.productCategoryDistributorRepo.FindOne(repository.ProductCategoryDistributorRepositoryFilter{
+				p, err := s.productDistributorRepo.FindOne(repository.ProductDistributorRepositoryFilter{
 					DistributorID: utils.Uint64(1),
-					Code:          &product.Catcode,
+					Code:          &product.Code,
 				})
 
 				if err != nil {
 					log.Fatal(err)
-					fmt.Printf("Skipping %v", product.Name)
+					fmt.Printf("Skipping %v, Error Getting Product", product.Name)
 					errorCount++
-					continue
+					return
 				}
 
-				weight, _ := strconv.Atoi(product.Weight)
-				volume, _ := strconv.Atoi(product.Volume)
+				if p == nil {
+					cat, err := s.productCategoryDistributorRepo.FindOne(repository.ProductCategoryDistributorRepositoryFilter{
+						DistributorID: utils.Uint64(1),
+						Code:          &product.Catcode,
+					})
 
-				newProductDistributor := models.ProductDistributor{
-					ExternalID:       strconv.Itoa(int(product.ID)),
-					Key:              uuid.NewString(),
-					DistributorID:    1,
-					CategoryID:       *cat.ID,
-					Name:             product.Name,
-					Code:             product.Code,
-					Description:      "",
-					Unit:             product.Unit,
-					Thumbnail:        "",
-					Images:           nil,
-					Price:            float64(product.BasePrice),
-					BulkPrice:        nil,
-					Weight:           float64(weight),
-					Volume:           float64(volume),
-					Stock:            float64(product.Qty),
-					IsStockUnlimited: false,
-					Status:           models.ProductActive,
-					CreatedAt:        time.Now(),
-					UpdatedAt:        time.Now(),
-					RemoteUpdate:     true,
+					if cat == nil {
+						log.Fatal(err)
+						fmt.Printf("Skipping %v, Unknown Product Category", product.Catcode)
+						errorCount++
+						return
+					}
+
+					if err != nil {
+						log.Fatal(err)
+						fmt.Printf("Skipping %v, Error Getting Product Category", product.Name)
+						errorCount++
+						return
+					}
+
+					weight, _ := strconv.ParseFloat(product.Weight, 64)
+					volume, _ := strconv.ParseFloat(product.Volume, 64)
+					img, err := s.s3service.Upload(models.ImageProductCategory, product.Images)
+					if err != nil {
+						log.Fatal(err)
+						fmt.Printf("Skipping %v, Error Uploading to S3", product.Name)
+						errorCount++
+						return
+					}
+
+					var bulkPrice []models.ProductBulkPrice
+					for _, price := range product.Price {
+						bulkPrice = append(bulkPrice, models.ProductBulkPrice{
+							Qty:   int64(price.Qty),
+							Price: float32(price.Price),
+						})
+					}
+
+					newProductDistributor := models.ProductDistributor{
+						ExternalID:       strconv.Itoa(int(product.ID)),
+						Key:              uuid.NewString(),
+						DistributorID:    1,
+						CategoryID:       *cat.ID,
+						Name:             product.Name,
+						Code:             product.Code,
+						Description:      "",
+						Unit:             product.Unit,
+						Thumbnail:        img.Key,
+						Images:           []string{img.Key},
+						Price:            float64(product.BasePrice),
+						BulkPrice:        bulkPrice,
+						Weight:           float64(weight),
+						Volume:           float64(volume),
+						Stock:            float64(product.AvailableQty),
+						IsStockUnlimited: false,
+						Status:           models.ProductActive,
+						CreatedAt:        time.Now(),
+						UpdatedAt:        time.Now(),
+						RemoteUpdate:     true,
+					}
+
+					s.productDistributorRepo.Save(&newProductDistributor)
+				} else {
+					p.Name = product.Name
+					p.Code = product.Code
+					p.Unit = product.Unit
+					p.Stock = float64(product.AvailableQty)
+					p.Price = float64(product.BasePrice)
 				}
-
-				s.productDistributorRepo.Save(&newProductDistributor)
-			} else {
-				continue
-			}
+			}(product)
 		}
 
+		wg.Wait()
 		page++
 	}
 }
