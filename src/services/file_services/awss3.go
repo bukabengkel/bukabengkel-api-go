@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/google/uuid"
@@ -35,7 +36,8 @@ type S3UploadResponse struct {
 
 func NewAWSS3Service(config *config.Config) *S3Service {
 	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String("ap-southeast-1"),
+		Region:      aws.String("ap-southeast-1"),
+		Credentials: credentials.NewStaticCredentials(config.Storage.AccessKey, config.Storage.SecretKey, ""),
 	}))
 
 	return &S3Service{
