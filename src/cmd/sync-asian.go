@@ -183,7 +183,7 @@ func (s *SyncAsian) syncProduct(cat uint) {
 		}
 
 		var wg sync.WaitGroup
-		wg.Add(len(response.Content.Data / 2))
+		wg.Add(len(response.Content.Data))
 
 		for _, product := range response.Content.Data {
 			go func(product Product) {
