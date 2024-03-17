@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/peang/bukabengkel-api-go/src/domain/entity"
 	"github.com/peang/bukabengkel-api-go/src/models"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 	"github.com/uptrace/bun"
@@ -16,8 +15,9 @@ type ProductRepository struct {
 }
 
 type ProductRepositoryFilter struct {
-	Name    *string
-	StoreID *int
+	Name          *string
+	StoreID       *int64
+	StockMoreThan *uint
 }
 
 func NewProductRepository(db *bun.DB, imageRepository *ImageRepository) *ProductRepository {
@@ -36,10 +36,14 @@ func (r *ProductRepository) queryBuilder(query *bun.SelectQuery, cond ProductRep
 		query.Where("? = ?", bun.Ident("product.store_id"), cond.StoreID)
 	}
 
+	if cond.StockMoreThan != nil {
+		query.Where("? > ?", bun.Ident("product.stock"), cond.StockMoreThan)
+	}
+
 	return query
 }
 
-func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sort string, filter ProductRepositoryFilter) (*[]entity.Product, int, error) {
+func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sort string, filter ProductRepositoryFilter) (*[]models.Product, int, error) {
 	sorts := utils.GenerateSort(sort)
 	offset, limit := utils.GenerateOffsetLimit(page, perPage)
 
@@ -57,16 +61,14 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 	}
 
 	if len(products) == 0 {
-		return &[]entity.Product{}, count, nil
+		return &[]models.Product{}, count, nil
 	}
 
-	var entityProducts []entity.Product
-	var entityProductIds []*int64
+	var entityProducts []models.Product
+	var entityProductIds []*uint64
 	for _, p := range products {
-		entityProduct := models.LoadProductModel(p)
-
 		entityProductIds = append(entityProductIds, p.ID)
-		entityProducts = append(entityProducts, *entityProduct)
+		entityProducts = append(entityProducts, p)
 	}
 
 	images, err := r.imageRepository.Find(ctx, 1, 5, "id", ImageRepositoryFilter{
@@ -76,17 +78,13 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 
 	if err == nil {
 		for key, p := range entityProducts {
-			var productImages []*entity.Image
+			var productImages []models.Image
 			for _, i := range images {
-				if p.ID == i.EntityId {
-					productImages = append(productImages, i)
+				if *p.ID == i.EntityID {
+					productImages = append(productImages, *i)
 				}
 			}
 			p.Images = productImages
-			if len(productImages) > 0 {
-				p.Thumbnail = productImages[0]
-			}
-
 			entityProducts[key] = p
 		}
 	}

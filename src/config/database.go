@@ -16,13 +16,15 @@ func LoadDatabase(c *Config) *bun.DB {
 	)
 
 	sqldb := sql.OpenDB(pgconn)
-
-	db := bun.NewDB(sqldb, pgdialect.New())
 	if c.Env == "production" {
 		maxOpenConns := 4 * runtime.GOMAXPROCS(0)
 		sqldb.SetMaxOpenConns(maxOpenConns)
 		sqldb.SetMaxIdleConns(maxOpenConns)
-	} else {
+	}
+
+	db := bun.NewDB(sqldb, pgdialect.New())
+
+	if c.Env != "production" {
 		db.AddQueryHook(bundebug.NewQueryHook(
 			bundebug.WithVerbose(true),
 			bundebug.FromEnv("BUNDEBUG"),

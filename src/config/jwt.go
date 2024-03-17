@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/peang/bukabengkel-api-go/src/domain/entity"
-	vo "github.com/peang/bukabengkel-api-go/src/domain/value_objects"
+	"github.com/peang/bukabengkel-api-go/src/models"
 )
 
 type TokenPayload struct {
@@ -22,15 +21,15 @@ type Payload struct {
 	ID            string
 	FirstName     string
 	LastName      interface{}
-	Email         vo.Email
-	Mobile        vo.Mobile
+	Email         models.Email
+	Mobile        models.Mobile
 	Status        float64
 	StoreRole     float64
 	StoreID       string
 	StoreName     string
 	StoreType     float64
 	StoreTypeName string
-	StoreLocation entity.Location
+	StoreLocation models.Location
 }
 
 type jwtService struct {
@@ -70,7 +69,7 @@ func (s *jwtService) GetTokenInfo(ctx context.Context, tokenString string) (toke
 
 	claim := token.Claims.(*TokenPayload)
 	if claim.ExpiresAt < time.Now().Unix() {
-		return TokenPayload{}, errors.New("Token Expired")
+		return TokenPayload{}, errors.New("token expired")
 	}
 
 	return *payload, nil

@@ -3,14 +3,14 @@ package usecase
 import (
 	"context"
 
-	"github.com/peang/bukabengkel-api-go/src/domain/entity"
+	"github.com/peang/bukabengkel-api-go/src/models"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 )
 
 // AuthUsecase represent the todos usecase contract
 type ProductUsecase interface {
-	List(ctx context.Context, page int, perPage int, sort string, filter repository.ProductRepositoryFilter) (*[]entity.Product, int, error)
+	List(ctx context.Context, page int, perPage int, sort string, filter repository.ProductRepositoryFilter) (*[]models.Product, int, error)
 }
 
 type productUsecase struct {
@@ -25,7 +25,7 @@ func NewProductUsecase(
 	}
 }
 
-func (u *productUsecase) List(ctx context.Context, page int, perPage int, sort string, filter repository.ProductRepositoryFilter) (*[]entity.Product, int, error) {
+func (u *productUsecase) List(ctx context.Context, page int, perPage int, sort string, filter repository.ProductRepositoryFilter) (*[]models.Product, int, error) {
 	products, count, err := u.productRepository.List(ctx, page, perPage, sort, filter)
 	if err != nil {
 		err = utils.NewInternalServerError(err)

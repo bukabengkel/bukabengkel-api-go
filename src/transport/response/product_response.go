@@ -1,16 +1,15 @@
 package response
 
 import (
-	"github.com/peang/bukabengkel-api-go/src/domain/entity"
+	"github.com/peang/bukabengkel-api-go/src/models"
 )
 
-// BuildingResponse represents building response payload
 type ProductResponse struct {
 	ID               string  `json:"id"`
 	Store            string  `json:"store"`
-	BrandID          *int64  `json:"brandId"`
+	BrandID          *uint64 `json:"brandId"`
 	BrandName        *string `json:"brandName"`
-	CategoryID       int64   `json:"categoryId"`
+	CategoryID       uint64  `json:"categoryId"`
 	CategoryName     string  `json:"categoryName"`
 	Name             string  `json:"name"`
 	Slug             string  `json:"slug"`
@@ -26,18 +25,17 @@ type ProductResponse struct {
 	StatusString     string  `json:"statusString"`
 }
 
-// BuildingDetailResponse transforms entity.Building to BuildingResponse
-func ProductDetailResponse(product *entity.Product) *ProductResponse {
+func ProductDetailResponse(product *models.Product) *ProductResponse {
 	response := &ProductResponse{
 		ID:               product.Key,
 		Store:            product.Store.Name,
-		CategoryID:       product.Category.ID,
+		CategoryID:       product.CategoryID,
 		CategoryName:     product.Category.Name,
 		Name:             product.Name,
 		Slug:             product.Slug,
 		Description:      product.Description,
 		Unit:             product.Unit,
-		Thumbnail:        product.Thumbnail.Path,
+		Thumbnail:        "",
 		Price:            product.Price,
 		SellPrice:        product.SellPrice,
 		Stock:            product.Stock,
@@ -51,15 +49,18 @@ func ProductDetailResponse(product *entity.Product) *ProductResponse {
 		response.BrandID = nil
 		response.BrandName = nil
 	} else {
-		response.BrandID = &product.Brand.ID
+		response.BrandID = product.Brand.ID
 		response.BrandName = &product.Brand.Name
+	}
+
+	if len(product.Images) > 0 {
+		response.Thumbnail = product.Images[0].Path
 	}
 
 	return response
 }
 
-// BuildingListResponse transforms []entity.Building to []BuildingResponse
-func ProductListResponse(products *[]entity.Product) []ProductResponse {
+func ProductListResponse(products *[]models.Product) []ProductResponse {
 	var responses = make([]ProductResponse, 0)
 	for _, product := range *products {
 		response := ProductDetailResponse(&product)

@@ -11,7 +11,6 @@ import (
 func (m *Middleware) JWTAuth() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-
 			ctx := c.Request().Context()
 			tokenStr := c.Request().Header.Get("Authorization")
 
@@ -35,9 +34,11 @@ func (m *Middleware) JWTAuth() echo.MiddlewareFunc {
 			c.Set("payload", tokenInfo.Payload)
 			c.Set("scope", tokenInfo.Scope)
 
-			stores := strings.Split(tokenInfo.Payload.StoreID, "-")
-			storeId := string(stores[0][0])
-			c.Set("store_id", storeId)
+			if tokenInfo.Payload.StoreID != "" { // This Condition for Bukabengkel Admin
+				stores := strings.Split(tokenInfo.Payload.StoreID, "-")
+				storeId := string(stores[0][0])
+				c.Set("store_id", storeId)
+			}
 
 			return next(c)
 		}

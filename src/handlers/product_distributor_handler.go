@@ -12,32 +12,25 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/utils"
 )
 
-type ProductHandler struct {
-	usecase usecase.ProductUsecase
+type ProductDistributorHandler struct {
+	usecase usecase.ProductDistributorUsecase
 }
 
-func NewProductHandler(
+func NewProductDistributorHandler(
 	e *echo.Echo,
 	middleware *middleware.Middleware,
-	usecase usecase.ProductUsecase,
+	usecase usecase.ProductDistributorUsecase,
 ) {
-	handler := &ProductHandler{
+	handler := &ProductDistributorHandler{
 		usecase: usecase,
 	}
 
-	apiV1 := e.Group("/v1/products")
+	apiV1 := e.Group("/v1/product-distributors")
 	apiV1.GET("", handler.List, middleware.RBAC())
 }
 
-func (h *ProductHandler) List(ctx echo.Context) (err error) {
-	storeId, err := strconv.Atoi(ctx.Get("store_id").(string))
-	if err != nil {
-		return ctx.JSON(utils.ParseHttpError(err))
-	}
-
-	filter := repository.ProductRepositoryFilter{
-		StoreID: utils.IntToInt64(storeId),
-	}
+func (h *ProductDistributorHandler) List(ctx echo.Context) (err error) {
+	filter := repository.ProductDistributorRepositoryFilter{}
 
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil || page < 1 {
@@ -49,14 +42,10 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 		perPage = 10
 	}
 
-	if ctx.QueryParam("keyword") != "" && len(ctx.QueryParam("keyword")) >= 3 {
-		filter.Name = utils.String(ctx.QueryParam("keyword"))
+	if ctx.QueryParam("name") != "" && len(ctx.QueryParam("name")) >= 3 {
+		filter.Name = utils.String(ctx.QueryParam("name"))
 
 	}
-
-	// if ctx.QueryParam("status") != "" {
-	// 	filter.Status = ctx.QueryParam("status")
-	// }
 
 	sort := "-id"
 	if ctx.QueryParam("sort") != "" {
@@ -69,5 +58,5 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 	}
 
 	meta := utils.BuildMeta(page, perPage, count)
-	return utils.ResponseJSON(ctx, http.StatusOK, "Product List", response.ProductListResponse(products), meta)
+	return utils.ResponseJSON(ctx, http.StatusOK, "Product List", response.ProductDistributorListResponse(products), meta)
 }

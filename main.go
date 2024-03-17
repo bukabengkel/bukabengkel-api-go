@@ -10,6 +10,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/labstack/echo/v4"
+	"github.com/peang/bukabengkel-api-go/src/cmd"
 	"github.com/peang/bukabengkel-api-go/src/config"
 	"github.com/peang/bukabengkel-api-go/src/handlers"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
@@ -17,6 +18,7 @@ import (
 	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -37,24 +39,41 @@ func main() {
 
 	// services
 	jwtService := config.NewJWTService(configApp.JWTSecretKey, configApp.BaseURL)
-	fileService := file_service.NewAWSS3Service(configApp)
+	s3service := file_service.NewAWSS3Service(configApp)
 
 	middleware := middleware.NewMiddleware(enfocer, appLogger, jwtService)
 
 	// Repositories
-	imageRepo := repository.NewImageRepository(db, fileService)
+	imageRepo := repository.NewImageRepository(db, s3service)
 	productRepo := repository.NewProductRepository(db, imageRepo)
+	productDistRepo := repository.NewProductDistributorRepository(db, s3service)
+	productCatDistRepo := repository.NewProductCategoryDistributorRepository(db)
 
 	// Usecases
 	productUsecase := usecase.NewProductUsecase(productRepo)
+	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo)
 
 	e := echo.New()
+	// e.Use(mw.CORS())
+	e.Use(middleware.CORSMiddleware())
+
+	handlers.NewProductHandler(e, middleware, productUsecase)
+	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())
 
-	// handlers.NewPporfHandler(e, middleware)
-	// handlers.NewHealthHandler(e, middleware)
-	handlers.NewProductHandler(e, middleware, productUsecase)
+	c := cron.New()
+	_, err = c.AddFunc("0 0 * * *", func() {
+		fmt.Println("Executing Sync Asian Products")
+		asian := cmd.NewSyncAsian(appLogger, productDistRepo, productCatDistRepo, imageRepo, s3service)
+
+		asian.Execute()
+	})
+	if err != nil {
+		log.Fatal("Fail to Register Cron")
+	}
+	c.Start()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -63,15 +82,12 @@ func main() {
 		}
 	}()
 
-	// Start server
 	go func() {
 		if err := e.Start(fmt.Sprintf(":%s", configApp.Port)); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal(err)
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
-	// Use a buffered channel to avoid missing signals as recommended for signal.Notify
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
