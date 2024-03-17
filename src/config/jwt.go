@@ -69,7 +69,7 @@ func (s *jwtService) GetTokenInfo(ctx context.Context, tokenString string) (toke
 
 	claim := token.Claims.(*TokenPayload)
 	if claim.ExpiresAt < time.Now().Unix() {
-		return TokenPayload{}, errors.New("Token Expired")
+		return TokenPayload{}, errors.New("token expired")
 	}
 
 	return *payload, nil

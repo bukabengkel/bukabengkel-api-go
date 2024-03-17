@@ -11,6 +11,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/labstack/echo/v4"
+	mw "github.com/labstack/echo/v4/middleware"
 	"github.com/peang/bukabengkel-api-go/src/config"
 	"github.com/peang/bukabengkel-api-go/src/handlers"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
@@ -53,11 +54,14 @@ func main() {
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo)
 
 	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.JWTAuth())
+	e.Use(mw.CORS())
 
 	handlers.NewProductHandler(e, middleware, productUsecase)
 	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
+
+	e.Use(middleware.Logger())
+	e.Use(middleware.JWTAuth())
+	// e.Use(middleware.CORSMiddleware())
 
 	c := registerCron()
 	c.Start()
