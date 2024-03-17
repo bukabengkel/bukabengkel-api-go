@@ -81,6 +81,7 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 			var productImages []models.Image
 			for _, img := range images {
 				if img.EntityID == *p.ID {
+					img.Path = r.imageRepository.s3service.BuildUrl(img.Path, 500, 500)
 					productImages = append(productImages, img)
 				}
 			}
