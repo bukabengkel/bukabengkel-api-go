@@ -6,13 +6,14 @@ import (
 	"fmt"
 
 	"github.com/peang/bukabengkel-api-go/src/models"
+	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 	"github.com/uptrace/bun"
 )
 
 type ProductDistributorRepository struct {
-	db              *bun.DB
-	imageRepository *ImageRepository
+	db          *bun.DB
+	fileService *file_service.S3Service
 }
 
 type ProductDistributorRepositoryFilter struct {
@@ -26,10 +27,10 @@ type ProductDistributorRepositoryValues struct {
 	RemoteUpdate *bool
 }
 
-func NewProductDistributorRepository(db *bun.DB, imageRepository *ImageRepository) *ProductDistributorRepository {
+func NewProductDistributorRepository(db *bun.DB, s3Service *file_service.S3Service) *ProductDistributorRepository {
 	return &ProductDistributorRepository{
-		db:              db,
-		imageRepository: imageRepository,
+		db:          db,
+		fileService: s3Service,
 	}
 }
 
@@ -108,7 +109,11 @@ func (r *ProductDistributorRepository) List(ctx context.Context, page int, perPa
 	}
 
 	var entityProducts []models.ProductDistributor
-	entityProducts = append(entityProducts, products...)
+	for _, p := range products {
+		p.Thumbnail = r.fileService.BuildUrl(p.Thumbnail, 200, 200)
+		entityProducts = append(entityProducts, p)
+	}
+	// entityProducts = append(entityProducts, products...)
 
 	return &entityProducts, count, nil
 }

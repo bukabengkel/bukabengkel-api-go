@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/peang/bukabengkel-api-go/src/models"
 	"github.com/peang/bukabengkel-api-go/src/utils"
@@ -81,8 +80,7 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 		for key, p := range entityProducts {
 			var productImages []models.Image
 			for _, i := range images {
-				if p.ID == &i.EntityID {
-					log.Fatal(i.EntityID)
+				if *p.ID == i.EntityID {
 					productImages = append(productImages, *i)
 				}
 			}

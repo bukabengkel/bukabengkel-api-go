@@ -36,7 +36,7 @@ func main() {
 
 	// Repositories
 	imageRepo := repository.NewImageRepository(db, s3service)
-	productDistributorRepo := repository.NewProductDistributorRepository(db, imageRepo)
+	productDistributorRepo := repository.NewProductDistributorRepository(db, s3service)
 	productCategoryDistributorRepo := repository.NewProductCategoryDistributorRepository(db)
 
 	Register(appLogger, productDistributorRepo, productCategoryDistributorRepo, imageRepo, s3service)

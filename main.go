@@ -47,7 +47,7 @@ func main() {
 	// Repositories
 	imageRepo := repository.NewImageRepository(db, s3service)
 	productRepo := repository.NewProductRepository(db, imageRepo)
-	productDistRepo := repository.NewProductDistributorRepository(db, imageRepo)
+	productDistRepo := repository.NewProductDistributorRepository(db, s3service)
 
 	// Usecases
 	productUsecase := usecase.NewProductUsecase(productRepo)

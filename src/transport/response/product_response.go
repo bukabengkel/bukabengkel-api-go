@@ -1,8 +1,6 @@
 package response
 
 import (
-	"fmt"
-
 	"github.com/peang/bukabengkel-api-go/src/models"
 )
 
@@ -54,8 +52,6 @@ func ProductDetailResponse(product *models.Product) *ProductResponse {
 		response.BrandID = product.Brand.ID
 		response.BrandName = &product.Brand.Name
 	}
-
-	fmt.Println(product.Images)
 
 	if len(product.Images) > 0 {
 		response.Thumbnail = product.Images[0].Path
