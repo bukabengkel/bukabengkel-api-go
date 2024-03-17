@@ -42,8 +42,8 @@ func (h *ProductDistributorHandler) List(ctx echo.Context) (err error) {
 		perPage = 10
 	}
 
-	if ctx.QueryParam("name") != "" && len(ctx.QueryParam("name")) >= 3 {
-		filter.Name = utils.String(ctx.QueryParam("name"))
+	if ctx.QueryParam("keyword") != "" && len(ctx.QueryParam("keyword")) >= 3 {
+		filter.Name = utils.String(ctx.QueryParam("keyword"))
 
 	}
 
