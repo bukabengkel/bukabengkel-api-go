@@ -51,6 +51,10 @@ func NewAWSS3Service(config *config.Config) *S3Service {
 }
 
 func (s *S3Service) BuildUrl(path string, width int, height int) string {
+	if path == "" {
+		return "https://ik.imagekit.io/bukabengkel/Assets/Bukabengkel%20Placeholder.png?tr=w-500,h-500"
+	}
+
 	if s.UseImageKit == "true" {
 		if width != 0 && height != 0 {
 			return fmt.Sprintf("%s/%s?tr=w-%d,h-%d", s.ImageKitUrl, path, width, height)
