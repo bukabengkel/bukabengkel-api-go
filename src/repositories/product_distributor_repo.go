@@ -92,7 +92,13 @@ func (r *ProductDistributorRepository) List(ctx context.Context, page int, perPa
 	sl := r.db.NewSelect().Model(&products)
 	sl = r.queryBuilder(sl, filter)
 
-	count, err := sl.Limit(limit).Offset(offset).OrderExpr(sorts).ScanAndCount(context.TODO())
+	count, err := sl.
+		Relation("Distributor").
+		Relation("Category").
+		Limit(limit).
+		Offset(offset).
+		OrderExpr(sorts).
+		ScanAndCount(context.TODO())
 	if err != nil {
 		return nil, 0, err
 	}

@@ -55,32 +55,3 @@ type Product struct {
 	Brand    *ProductBrand    `bun:"rel:belongs-to"`
 	Category *ProductCategory `bun:"rel:belongs-to"`
 }
-
-// func LoadProductModel(p Product) *entity.Product {
-// 	return &entity.Product{
-// 		ID:               *p.ID,
-// 		Key:              p.Key,
-// 		Store:            LoadStoreModel(p.Store),
-// 		Brand:            LoadProductBrandModel(p.Brand),
-// 		Category:         LoadProductCategoryModel(p.Category),
-// 		Name:             p.Name,
-// 		Slug:             p.Slug,
-// 		Description:      p.Description,
-// 		Unit:             p.Unit,
-// 		Thumbnail:        &entity.Image{},
-// 		Price:            p.Price,
-// 		SellPrice:        p.SellPrice,
-// 		Stock:            p.Stock,
-// 		StockReserved:    p.StockReserved,
-// 		StockValue:       p.StockValue,
-// 		StockMinimum:     p.StockMinimum,
-// 		IsStockUnlimited: p.IsStockUnlimited,
-// 		Status:           ProductStatus(p.Status),
-// 		CreatedAt:        p.CreatedAt,
-// 		CreatedBy:        p.CreatedBy,
-// 		UpdatedAt:        p.UpdatedAt,
-// 		UpdatedBy:        p.UpdatedBy,
-// 		DeletedAt:        p.DeletedAt,
-// 		DeletedBy:        p.DeletedBy,
-// 	}
-// }

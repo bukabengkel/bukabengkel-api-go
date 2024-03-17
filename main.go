@@ -46,15 +46,18 @@ func main() {
 	// Repositories
 	imageRepo := repository.NewImageRepository(db, s3service)
 	productRepo := repository.NewProductRepository(db, imageRepo)
+	productDistRepo := repository.NewProductDistributorRepository(db, imageRepo)
 
 	// Usecases
 	productUsecase := usecase.NewProductUsecase(productRepo)
+	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())
 
 	handlers.NewProductHandler(e, middleware, productUsecase)
+	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
 
 	c := registerCron()
 	c.Start()
@@ -81,7 +84,7 @@ func main() {
 func registerCron() *cron.Cron {
 	c := cron.New()
 
-	_, err := c.AddFunc("0 0 * * *", func() {
+	_, err := c.AddFunc("* * * * *", func() {
 		dir, _ := os.Getwd()
 
 		cmd := exec.Command("go", "run", "cli/main.go", "sync-asian")
