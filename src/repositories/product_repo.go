@@ -71,7 +71,7 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 		entityProducts = append(entityProducts, p)
 	}
 
-	images, err := r.imageRepository.Find(ctx, 1, 5, "id", ImageRepositoryFilter{
+	images, err := r.imageRepository.Find(ctx, 1, 50, "id", ImageRepositoryFilter{
 		EntityIDS:  entityProductIds,
 		EntityType: utils.Uint(1),
 	})
@@ -79,11 +79,12 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 	if err == nil {
 		for key, p := range entityProducts {
 			var productImages []models.Image
-			for _, i := range images {
-				if *p.ID == i.EntityID {
-					productImages = append(productImages, *i)
+			for _, img := range images {
+				if img.EntityID == *p.ID {
+					productImages = append(productImages, img)
 				}
 			}
+
 			p.Images = productImages
 			entityProducts[key] = p
 		}
