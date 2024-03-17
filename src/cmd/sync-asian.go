@@ -267,7 +267,7 @@ func (s *SyncAsian) syncProduct(cat uint) {
 					volume, _ := strconv.ParseFloat(product.Volume, 64)
 					var img file_service.S3UploadResponse
 					if product.Images != "" {
-						imgPtr, err := s.s3service.Upload(models.ImageProductCategory, product.Images)
+						imgPtr, err := s.s3service.Upload(models.ImageProductDistributor, product.Images)
 						if err != nil {
 							s.logger.Fatal(err)
 							fmt.Printf("Skipping %v, Error Uploading to S3", product.Name)

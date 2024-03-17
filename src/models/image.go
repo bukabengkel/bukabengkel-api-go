@@ -14,7 +14,8 @@ const (
 )
 
 const (
-	ImageProductCategory = "products"
+	ImageProduct            = "products"
+	ImageProductDistributor = "products_distributor"
 )
 
 func (t ImageType) String() string {
