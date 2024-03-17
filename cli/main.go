@@ -61,7 +61,7 @@ func Register(
 	syncAsianCmd := &cobra.Command{
 		Use:   "sync-asian",
 		Short: "Sync Asian Products",
-		Run:   asian.Execute,
+		Run:   asian.ExecuteViaCmd,
 	}
 
 	rootCmd.AddCommand(syncAsianCmd)

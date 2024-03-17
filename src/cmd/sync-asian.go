@@ -92,7 +92,35 @@ func NewSyncAsian(
 	}
 }
 
-func (s *SyncAsian) Execute(cmd *cobra.Command, args []string) {
+func (s *SyncAsian) ExecuteViaCmd(cmd *cobra.Command, args []string) {
+	s.productCategoryDistributorRepo.UpdateWithCondition(
+		repository.ProductCategoryDistributorRepositoryFilter{
+			DistributorID: utils.Uint64(1),
+		},
+		repository.ProductCategoryDistributorRepositoryValues{
+			RemoteUpdate: utils.Boolean(false),
+		},
+	)
+
+	s.productDistributorRepo.UpdateWithCondition(
+		repository.ProductDistributorRepositoryFilter{
+			DistributorID: utils.Uint64(1),
+		},
+		repository.ProductDistributorRepositoryValues{
+			RemoteUpdate: utils.Boolean(false),
+		},
+	)
+
+	s.syncCategory(1)
+	s.syncCategory(2)
+
+	s.syncProduct(1)
+	s.syncProduct(2)
+
+	s.remove()
+}
+
+func (s *SyncAsian) Execute() {
 	s.productCategoryDistributorRepo.UpdateWithCondition(
 		repository.ProductCategoryDistributorRepositoryFilter{
 			DistributorID: utils.Uint64(1),

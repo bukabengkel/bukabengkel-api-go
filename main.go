@@ -5,13 +5,12 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
 
 	_ "net/http/pprof"
 
 	"github.com/labstack/echo/v4"
-	mw "github.com/labstack/echo/v4/middleware"
+	"github.com/peang/bukabengkel-api-go/src/cmd"
 	"github.com/peang/bukabengkel-api-go/src/config"
 	"github.com/peang/bukabengkel-api-go/src/handlers"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
@@ -48,24 +47,33 @@ func main() {
 	imageRepo := repository.NewImageRepository(db, s3service)
 	productRepo := repository.NewProductRepository(db, imageRepo)
 	productDistRepo := repository.NewProductDistributorRepository(db, s3service)
+	productCatDistRepo := repository.NewProductCategoryDistributorRepository(db)
 
 	// Usecases
 	productUsecase := usecase.NewProductUsecase(productRepo)
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo)
 
 	e := echo.New()
-	e.Use(mw.CORS())
+	// e.Use(mw.CORS())
+	e.Use(middleware.CORSMiddleware())
 
 	handlers.NewProductHandler(e, middleware, productUsecase)
 	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())
-	// e.Use(middleware.CORSMiddleware())
 
-	c := registerCron()
+	c := cron.New()
+	_, err = c.AddFunc("0 0 * * *", func() {
+		fmt.Println("Executing Sync Asian Products")
+		asian := cmd.NewSyncAsian(appLogger, productDistRepo, productCatDistRepo, imageRepo, s3service)
+
+		asian.Execute()
+	})
+	if err != nil {
+		log.Fatal("Fail to Register Cron")
+	}
 	c.Start()
-	// defer c.Stop()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -83,30 +91,4 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
-}
-
-func registerCron() *cron.Cron {
-	c := cron.New()
-
-	_, err := c.AddFunc("* * * * *", func() {
-		dir, _ := os.Getwd()
-
-		cmd := exec.Command("go", "run", "cli/main.go", "sync-asian")
-		cmd.Dir = dir
-
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			log.Printf("Error running command: %v\n", err)
-			return
-		}
-		fmt.Printf("Command output: %s\n", out)
-
-	})
-
-	if err != nil {
-		log.Fatal("Error adding cron job:", err)
-		return nil
-	}
-
-	return c
 }
