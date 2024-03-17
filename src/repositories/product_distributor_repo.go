@@ -19,6 +19,7 @@ type ProductDistributorRepositoryFilter struct {
 	DistributorID *uint64
 	Name          *string
 	Code          *string
+	RemoteUpdate  *bool
 }
 
 type ProductDistributorRepositoryValues struct {
@@ -45,6 +46,10 @@ func (r *ProductDistributorRepository) queryBuilder(query *bun.SelectQuery, filt
 		query.Where("? = ?", bun.Ident("code"), filter.Code)
 	}
 
+	if filter.RemoteUpdate != nil {
+		query.Where("? = ?", bun.Ident("remote_update"), filter.RemoteUpdate)
+	}
+
 	return query
 }
 
@@ -64,6 +69,21 @@ func (r *ProductDistributorRepository) updateQueryBuilder(
 	return query
 }
 
+func (r *ProductDistributorRepository) deleteQueryBuilder(
+	query *bun.DeleteQuery,
+	filter ProductDistributorRepositoryFilter,
+) *bun.DeleteQuery {
+	if filter.DistributorID != nil {
+		query.Where("? = ?", bun.Ident("distributor_id"), filter.DistributorID)
+	}
+
+	if filter.RemoteUpdate != nil {
+		query.Where("? = ?", bun.Ident("remote_update"), filter.RemoteUpdate)
+	}
+
+	return query
+}
+
 func (r *ProductDistributorRepository) List(ctx context.Context, page int, perPage int, sort string, filter ProductDistributorRepositoryFilter) (*[]models.ProductDistributor, int, error) {
 	sorts := utils.GenerateSort(sort)
 	offset, limit := utils.GenerateOffsetLimit(page, perPage)
@@ -72,9 +92,7 @@ func (r *ProductDistributorRepository) List(ctx context.Context, page int, perPa
 	sl := r.db.NewSelect().Model(&products)
 	sl = r.queryBuilder(sl, filter)
 
-	count, err := sl.
-		Relation("Location").
-		Limit(limit).Offset(offset).OrderExpr(sorts).ScanAndCount(context.TODO())
+	count, err := sl.Limit(limit).Offset(offset).OrderExpr(sorts).ScanAndCount(context.TODO())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -147,4 +165,32 @@ func (r *ProductDistributorRepository) FindOne(filter ProductDistributorReposito
 	}
 
 	return &product, nil
+}
+
+func (r *ProductDistributorRepository) Delete(product *models.ProductDistributor) error {
+	_, err := r.db.NewDelete().Model(product).Where("id = ?", product.ID).Exec(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *ProductDistributorRepository) DeleteWithCondition(filter ProductDistributorRepositoryFilter) (int64, error) {
+	var product models.ProductDistributor
+
+	sl := r.db.NewDelete().Model(&product)
+	sl = r.deleteQueryBuilder(sl, filter)
+
+	res, err := sl.Exec(context.TODO())
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

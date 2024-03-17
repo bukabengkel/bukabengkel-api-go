@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -68,6 +69,7 @@ type Meta struct {
 }
 
 type SyncAsian struct {
+	logger                         utils.Logger
 	productDistributorRepo         *repository.ProductDistributorRepository
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository
 	imageRepo                      *repository.ImageRepository
@@ -75,12 +77,14 @@ type SyncAsian struct {
 }
 
 func NewSyncAsian(
+	logger utils.Logger,
 	productDistributorRepo *repository.ProductDistributorRepository,
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository,
 	imageRepo *repository.ImageRepository,
 	s3service *file_service.S3Service,
 ) *SyncAsian {
 	return &SyncAsian{
+		logger:                         logger,
 		productDistributorRepo:         productDistributorRepo,
 		productCategoryDistributorRepo: productCategoryDistributorRepo,
 		imageRepo:                      imageRepo,
@@ -112,19 +116,23 @@ func (s *SyncAsian) Execute(cmd *cobra.Command, args []string) {
 
 	s.syncProduct(1)
 	s.syncProduct(2)
+
+	s.remove()
 }
 
 func (s *SyncAsian) syncCategory(cat uint) {
 	var errorCount uint
+	s.logger.Infof("Getting Category %v", cat)
+
 	resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/list/%v", cat), "GET", 5)
 	if err != nil {
-		log.Fatalf("Failed to Fetch %v", err)
+		s.logger.Fatalf("Failed to Fetch %v", err)
 	}
 
 	var response CategoryResponse
 	err = json.Unmarshal([]byte(resp), &response)
 	if err != nil {
-		log.Fatalf("Failed to parse %v", err)
+		s.logger.Fatalf("Failed to parse %v", err)
 	}
 
 	for _, category := range response.Content.Data {
@@ -133,7 +141,7 @@ func (s *SyncAsian) syncCategory(cat uint) {
 			Code:          &category.Code,
 		})
 		if err != nil {
-			log.Fatal(err)
+			s.logger.Fatal(err)
 			fmt.Printf("Skipping %v", category.Name)
 			errorCount++
 			continue
@@ -163,10 +171,15 @@ func (s *SyncAsian) syncCategory(cat uint) {
 
 func (s *SyncAsian) syncProduct(cat uint) {
 	var errorCount uint
-	var page uint
+	var totalCreate uint
+	var totalUpdate uint
+	page := 1
 	hasResult := true
 	for hasResult {
-		resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/product/%v?page=%v&per_page=50", cat, page), "GET", 5)
+		var errorCountPerPage uint
+
+		fmt.Printf("Getting Product Page %v\n", page)
+		resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/product/%v?page=%v&per_page=50&sort=Terbaru", cat, page), "GET", 5)
 		if err != nil {
 			log.Fatalf("Failed to Fetch %v", err)
 		}
@@ -195,29 +208,30 @@ func (s *SyncAsian) syncProduct(cat uint) {
 				})
 
 				if err != nil {
-					log.Fatal(err)
-					fmt.Printf("Skipping %v, Error Getting Product", product.Name)
-					errorCount++
+					errorCountPerPage++
+					log.Fatalf("Skipping %v, Error Getting Product", product.Name)
 					return
 				}
 
 				if p == nil {
+					fmt.Printf("Product %v Not Found, Creating\n", product.Code)
+
 					cat, err := s.productCategoryDistributorRepo.FindOne(repository.ProductCategoryDistributorRepositoryFilter{
 						DistributorID: utils.Uint64(1),
 						Code:          &product.Catcode,
 					})
 
 					if cat == nil {
-						log.Fatal(err)
+						s.logger.Fatal(err)
 						fmt.Printf("Skipping %v, Unknown Product Category", product.Catcode)
-						errorCount++
+						errorCountPerPage++
 						return
 					}
 
 					if err != nil {
-						log.Fatal(err)
+						s.logger.Fatal(err)
 						fmt.Printf("Skipping %v, Error Getting Product Category", product.Name)
-						errorCount++
+						errorCountPerPage++
 						return
 					}
 
@@ -228,9 +242,9 @@ func (s *SyncAsian) syncProduct(cat uint) {
 						imgPtr, err := s.s3service.Upload(models.ImageProductCategory, product.Images)
 						img = *imgPtr
 						if err != nil {
-							log.Fatal(err)
+							s.logger.Fatal(err)
 							fmt.Printf("Skipping %v, Error Uploading to S3", product.Name)
-							errorCount++
+							errorCountPerPage++
 							return
 						}
 					} else {
@@ -270,15 +284,17 @@ func (s *SyncAsian) syncProduct(cat uint) {
 
 					_, err = s.productDistributorRepo.Save(&newProductDistributor)
 					if err != nil {
-						log.Fatal(err)
+						s.logger.Fatal(err)
 						fmt.Printf("Skipping %v, Error Inserting", product.Name)
-						errorCount++
+						errorCountPerPage++
 						return
 					}
 
+					totalCreate++
 				} else {
+					fmt.Printf("Product %v Found, Updating\n", product.Code)
+
 					p.Name = product.Name
-					p.Code = product.Code
 					p.Unit = product.Unit
 					p.Stock = float64(product.AvailableQty)
 					p.Price = float64(product.BasePrice)
@@ -286,17 +302,49 @@ func (s *SyncAsian) syncProduct(cat uint) {
 
 					_, err := s.productDistributorRepo.Update(p)
 					if err != nil {
-						log.Fatal(err)
-						fmt.Printf("Skipping %v, Error Updating", product.Name)
-						errorCount++
+						errorCountPerPage++
+						log.Fatalf("Skipping %v, Error Updating", product.Name)
 						return
 					}
+
+					totalUpdate++
 				}
 			}(product)
 		}
 
 		wg.Wait()
-		// time.Sleep(1 * time.Second)
 		page++
+		errorCount += errorCountPerPage
+
+		// time.Sleep(1 * time.Second)
+		fmt.Printf("Done Processed Page %v, with %v of Error(s)\n", page, errorCountPerPage)
+	}
+
+	fmt.Printf("Done Processed: %v Created, %v Updated\n", totalCreate, totalUpdate)
+}
+
+func (s *SyncAsian) remove() {
+	hasResult := true
+
+	for hasResult {
+		products, count, err := s.productDistributorRepo.List(context.TODO(), 1, 10, "id", repository.ProductDistributorRepositoryFilter{
+			DistributorID: utils.Uint64(1),
+			RemoteUpdate:  utils.Boolean(false),
+		})
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println(count)
+		if len(*products) == 0 {
+			hasResult = false
+			break
+		}
+
+		for _, product := range *products {
+			s.s3service.Delete(product.Images[0])
+			s.productDistributorRepo.Delete(&product)
+		}
 	}
 }

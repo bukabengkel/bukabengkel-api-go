@@ -72,7 +72,6 @@ func (s *S3Service) Upload(category string, fileUrl string) (*S3UploadResponse, 
 		return nil, err
 	}
 	defer os.Remove(tmp.Name())
-	// defer tmp.Close()
 
 	_, err = io.Copy(tmp, resp.Body)
 	if err != nil {
@@ -111,4 +110,16 @@ func (s *S3Service) Upload(category string, fileUrl string) (*S3UploadResponse, 
 		Bucket:    s.Bucket,
 		Key:       key,
 	}, nil
+}
+
+func (s *S3Service) Delete(filepath string) error {
+	fmt.Println(filepath)
+	_, err := s.Client.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: &s.Bucket,
+		Key:    &filepath,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

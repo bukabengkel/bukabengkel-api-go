@@ -16,6 +16,7 @@ type ProductCategoryDistributorRepositoryFilter struct {
 	ExternalID    *string
 	DistributorID *uint64
 	Code          *string
+	RemoteUpdate  *bool
 }
 
 type ProductCategoryDistributorRepositoryValues struct {
@@ -66,6 +67,29 @@ func (r *ProductCategoryDistributorRepository) updateQueryBuilder(
 
 	if values.RemoteUpdate != nil {
 		query.Set("? = ?", bun.Ident("remote_update"), values.RemoteUpdate)
+	}
+
+	return query
+}
+
+func (r *ProductCategoryDistributorRepository) deleteQueryBuilder(
+	query *bun.DeleteQuery,
+	filter ProductCategoryDistributorRepositoryFilter,
+) *bun.DeleteQuery {
+	if filter.DistributorID != nil {
+		query.Where("? = ?", bun.Ident("distributor_id"), filter.DistributorID)
+	}
+
+	if filter.ExternalID != nil {
+		query.Where("? = ?", bun.Ident("external_id"), filter.ExternalID)
+	}
+
+	if filter.Code != nil {
+		query.Where("? = ?", bun.Ident("code"), filter.Code)
+	}
+
+	if filter.RemoteUpdate != nil {
+		query.Where("? = ?", bun.Ident("remote_update"), filter.RemoteUpdate)
 	}
 
 	return query
@@ -138,4 +162,23 @@ func (r *ProductCategoryDistributorRepository) Delete(productCategory *models.Pr
 	}
 
 	return nil
+}
+
+func (r *ProductCategoryDistributorRepository) DeleteWithCondition(filter ProductCategoryDistributorRepositoryFilter) (int64, error) {
+	var product models.ProductDistributor
+
+	sl := r.db.NewDelete().Model(&product)
+	sl = r.deleteQueryBuilder(sl, filter)
+
+	res, err := sl.Exec(context.TODO())
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

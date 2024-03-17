@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 
 	_ "net/http/pprof"
@@ -17,6 +18,7 @@ import (
 	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -37,12 +39,12 @@ func main() {
 
 	// services
 	jwtService := config.NewJWTService(configApp.JWTSecretKey, configApp.BaseURL)
-	fileService := file_service.NewAWSS3Service(configApp)
+	s3service := file_service.NewAWSS3Service(configApp)
 
 	middleware := middleware.NewMiddleware(enfocer, appLogger, jwtService)
 
 	// Repositories
-	imageRepo := repository.NewImageRepository(db, fileService)
+	imageRepo := repository.NewImageRepository(db, s3service)
 	productRepo := repository.NewProductRepository(db, imageRepo)
 
 	// Usecases
@@ -53,6 +55,10 @@ func main() {
 	e.Use(middleware.JWTAuth())
 
 	handlers.NewProductHandler(e, middleware, productUsecase)
+
+	c := registerCron()
+	c.Start()
+	defer c.Stop()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -70,4 +76,30 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
+}
+
+func registerCron() *cron.Cron {
+	c := cron.New()
+
+	_, err := c.AddFunc("* * * * *", func() {
+		dir, _ := os.Getwd()
+
+		cmd := exec.Command("go", "run", "cli/main.go", "sync-asian")
+		cmd.Dir = dir
+
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Printf("Error running command: %v\n", err)
+			return
+		}
+		fmt.Printf("Command output: %s\n", out)
+
+	})
+
+	if err != nil {
+		log.Fatal("Error adding cron job:", err)
+		return nil
+	}
+
+	return c
 }
