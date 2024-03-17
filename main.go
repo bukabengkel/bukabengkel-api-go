@@ -58,7 +58,7 @@ func main() {
 
 	c := registerCron()
 	c.Start()
-	defer c.Stop()
+	// defer c.Stop()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -81,7 +81,7 @@ func main() {
 func registerCron() *cron.Cron {
 	c := cron.New()
 
-	_, err := c.AddFunc("* * * * *", func() {
+	_, err := c.AddFunc("0 0 * * *", func() {
 		dir, _ := os.Getwd()
 
 		cmd := exec.Command("go", "run", "cli/main.go", "sync-asian")
