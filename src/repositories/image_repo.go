@@ -11,7 +11,7 @@ import (
 
 type ImageRepository struct {
 	db        *bun.DB
-	s3Service *file_service.S3Service
+	s3service *file_service.S3Service
 }
 
 type ImageRepositoryFilter struct {
@@ -20,10 +20,10 @@ type ImageRepositoryFilter struct {
 	EntityType *uint
 }
 
-func NewImageRepository(db *bun.DB, s3Service *file_service.S3Service) *ImageRepository {
+func NewImageRepository(db *bun.DB, s3service *file_service.S3Service) *ImageRepository {
 	return &ImageRepository{
 		db:        db,
-		s3Service: s3Service,
+		s3service: s3service,
 	}
 }
 
@@ -43,7 +43,7 @@ func (r *ImageRepository) queryBuilder(query *bun.SelectQuery, cond ImageReposit
 	return query
 }
 
-func (r *ImageRepository) Find(ctx context.Context, page int, perPage int, sort string, filter ImageRepositoryFilter) ([]*models.Image, error) {
+func (r *ImageRepository) Find(ctx context.Context, page int, perPage int, sort string, filter ImageRepositoryFilter) ([]models.Image, error) {
 	sorts := utils.GenerateSort(sort)
 	offset, limit := utils.GenerateOffsetLimit(page, perPage)
 
@@ -57,18 +57,10 @@ func (r *ImageRepository) Find(ctx context.Context, page int, perPage int, sort 
 	}
 
 	if len(images) == 0 {
-		return []*models.Image{}, nil
+		return []models.Image{}, nil
 	}
 
-	var entityImages []*models.Image
-
-	for _, image := range images {
-		// entityImage := models.LoadImageModel(&image)
-		image.Path = r.s3Service.BuildUrl(image.Path, 500, 500)
-		entityImages = append(entityImages, &image)
-	}
-
-	return entityImages, nil
+	return images, nil
 }
 
 func (r *ImageRepository) FindAndCount(ctx context.Context, page int, perPage int, sort string, filter ImageRepositoryFilter) (*[]models.Image, int, error) {
