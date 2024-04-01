@@ -1,6 +1,8 @@
 package response
 
 import (
+	"time"
+
 	"github.com/peang/bukabengkel-api-go/src/models"
 )
 
@@ -16,6 +18,7 @@ type ProductDistributorResponse struct {
 	Price         float64                   `json:"price"`
 	BulkPrice     []models.ProductBulkPrice `json:"bulk_price"`
 	Stock         float64                   `json:"stock"`
+	UpdatedAt     time.Time                 `json:"updated_at"`
 }
 
 func ProductDistributorDetailResponse(product *models.ProductDistributor) *ProductDistributorResponse {
@@ -31,6 +34,7 @@ func ProductDistributorDetailResponse(product *models.ProductDistributor) *Produ
 		Price:         product.Price,
 		BulkPrice:     product.BulkPrice,
 		Stock:         product.Stock,
+		UpdatedAt:     product.UpdatedAt,
 	}
 
 	return response

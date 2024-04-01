@@ -327,6 +327,7 @@ func (s *SyncAsian) syncProduct(cat uint) {
 					p.Stock = float64(product.AvailableQty)
 					p.Price = float64(product.BasePrice)
 					p.RemoteUpdate = true
+					p.UpdatedAt = time.Now()
 
 					_, err := s.productDistributorRepo.Update(p)
 					if err != nil {
