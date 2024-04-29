@@ -53,7 +53,7 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 		filter.Name = utils.String(ctx.QueryParam("keyword"))
 	}
 
-	if ctx.QueryParam("categoryId") != "" {
+	if ctx.QueryParam("categoryId") != "" && ctx.QueryParam("categoryId") != "0" {
 		filter.CategoryId = utils.String(ctx.QueryParam("categoryId"))
 	}
 
