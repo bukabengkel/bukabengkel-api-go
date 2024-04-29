@@ -16,6 +16,7 @@ type ProductRepository struct {
 
 type ProductRepositoryFilter struct {
 	Name          *string
+	CategoryId    *string
 	StoreID       *int64
 	StockMoreThan *uint
 }
@@ -30,6 +31,10 @@ func NewProductRepository(db *bun.DB, imageRepository *ImageRepository) *Product
 func (r *ProductRepository) queryBuilder(query *bun.SelectQuery, cond ProductRepositoryFilter) *bun.SelectQuery {
 	if cond.Name != nil {
 		query.Where("? ILIKE ?", bun.Ident("product.name"), fmt.Sprintf("%%%s%%", *cond.Name))
+	}
+
+	if cond.CategoryId != nil {
+		query.Where("? = ?", bun.Ident("product.category_id"), cond.CategoryId)
 	}
 
 	if cond.StoreID != nil {
