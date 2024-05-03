@@ -61,7 +61,7 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 	// 	filter.Status = ctx.QueryParam("status")
 	// }
 
-	sort := "-id"
+	sort := "name"
 	if ctx.QueryParam("sort") != "" {
 		sort = ctx.QueryParam("orders")
 	}
