@@ -1,14 +1,16 @@
 package utils
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func GenerateSort(str string) string {
 	len := len(str)
 	flag := string(str[0])
 	if flag == "-" {
-		return fmt.Sprintf("%v %v", str[1:len], "desc")
+		return fmt.Sprintf("%v %v", ToSnakeCase(str[1:len]), "desc")
 	} else {
-		return fmt.Sprintf("%v %v", str[0:len], "asc")
+		return fmt.Sprintf("%v %v", ToSnakeCase(str[0:len]), "asc")
 	}
 }
 
