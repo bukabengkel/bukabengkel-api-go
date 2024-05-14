@@ -63,7 +63,7 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 
 	sort := "name"
 	if ctx.QueryParam("sort") != "" {
-		sort = ctx.QueryParam("orders")
+		sort = ctx.QueryParam("sort")
 	}
 
 	products, count, err := h.usecase.List(ctx.Request().Context(), page, perPage, sort, filter)
