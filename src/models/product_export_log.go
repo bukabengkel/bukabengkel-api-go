@@ -33,7 +33,7 @@ func (s ProductExportStatus) String() string {
 type ProductExportLog struct {
 	bun.BaseModel `bun:"table:product_export_log"`
 
-	ID        *uint64             `bun:"id,pk,autoincrement"`
+	ID        uint64              `bun:"id,pk,nullzero"`
 	StoreID   uint64              `bun:"store_id,notnull"`
 	UserID    uint64              `bun:"user_id,notnull"`
 	Status    ProductExportStatus `bun:"status,notnull"`
