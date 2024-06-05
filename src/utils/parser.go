@@ -19,6 +19,11 @@ func IntToInt64(i int) *int64 {
 	return &parsed
 }
 
+func IntToUint(i int) uint {
+	parsed := uint(i)
+	return parsed
+}
+
 func String(s string) *string {
 	return &s
 }

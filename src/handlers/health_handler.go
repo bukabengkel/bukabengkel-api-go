@@ -13,8 +13,6 @@ func NewHealthHandler(e *echo.Echo, middleware *middleware.Middleware) {
 	handler := &HealthCheckHandler{}
 
 	e.GET("/health-check", handler.Check)
-
-	return
 }
 
 func (h *HealthCheckHandler) Check(ctx echo.Context) (err error) {

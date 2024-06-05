@@ -48,10 +48,12 @@ func main() {
 	productRepo := repository.NewProductRepository(db, imageRepo)
 	productDistRepo := repository.NewProductDistributorRepository(db, s3service)
 	productCatDistRepo := repository.NewProductCategoryDistributorRepository(db)
+	productExportLogRepo := repository.NewProductExportLogRepository(db)
 
 	// Usecases
 	productUsecase := usecase.NewProductUsecase(productRepo)
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo)
+	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
 
 	e := echo.New()
 	// e.Use(mw.CORS())
@@ -59,6 +61,7 @@ func main() {
 
 	handlers.NewProductHandler(e, middleware, productUsecase)
 	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
+	handlers.NewProductExportLogHandler(e, middleware, productExportLogUsecase)
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())

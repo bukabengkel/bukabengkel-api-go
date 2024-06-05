@@ -2,11 +2,10 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
-	repository "github.com/peang/bukabengkel-api-go/src/repositories"
+	"github.com/peang/bukabengkel-api-go/src/transport/request"
 	"github.com/peang/bukabengkel-api-go/src/transport/response"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	"github.com/peang/bukabengkel-api-go/src/utils"
@@ -30,33 +29,17 @@ func NewProductDistributorHandler(
 }
 
 func (h *ProductDistributorHandler) List(ctx echo.Context) (err error) {
-	filter := repository.ProductDistributorRepositoryFilter{}
+	dto := request.ProductDistributorListDTO{}
 
-	page, err := strconv.Atoi(ctx.QueryParam("page"))
-	if err != nil || page < 1 {
-		page = 1
-	}
-
-	perPage, err := strconv.Atoi(ctx.QueryParam("perPage"))
-	if err != nil || perPage < 1 || perPage > 100 {
-		perPage = 10
-	}
-
-	if ctx.QueryParam("keyword") != "" && len(ctx.QueryParam("keyword")) >= 3 {
-		filter.Name = utils.String(ctx.QueryParam("keyword"))
-
-	}
-
-	sort := "-id"
-	if ctx.QueryParam("sort") != "" {
-		sort = ctx.QueryParam("orders")
-	}
-
-	products, count, err := h.usecase.List(ctx.Request().Context(), page, perPage, sort, filter)
+	products, count, err := h.usecase.List(ctx.Request().Context(), dto)
 	if err != nil {
 		return ctx.JSON(utils.ParseHttpError(err))
 	}
 
-	meta := utils.BuildMeta(page, perPage, count)
-	return utils.ResponseJSON(ctx, http.StatusOK, "Product List", response.ProductDistributorListResponse(products), meta)
+	return utils.ResponseJSON(
+		ctx,
+		http.StatusOK,
+		"Product List",
+		response.ProductDistributorListResponse(products), utils.BuildMeta(dto.Page, dto.PerPage, count),
+	)
 }
