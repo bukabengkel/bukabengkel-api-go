@@ -36,7 +36,14 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 	}
 
 	dto := request.ProductListDTO{
-		StoreID: uint(storeId),
+		StoreID:       uint(storeId),
+		Page:          ctx.QueryParam("page"),
+		PerPage:       ctx.QueryParam("perPage"),
+		Sort:          ctx.QueryParam("sort"),
+		Keyword:       ctx.QueryParam("keyword"),
+		CategoryId:    ctx.QueryParam("categoryId"),
+		Name:          ctx.QueryParam("name"),
+		StockMoreThan: ctx.QueryParam("stockMoreThan"),
 	}
 
 	products, count, err := h.usecase.List(ctx.Request().Context(), dto)

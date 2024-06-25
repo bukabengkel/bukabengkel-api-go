@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
+	"strings"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 )
 
@@ -148,31 +149,19 @@ func NewUnprocessableEntityError(details interface{}) HttpErr {
 }
 
 // New Invalid Input Error - Validation
-func NewInvalidInputError(errs validation.Errors) HttpErr {
-	type invalidField struct {
-		Field string `json:"field"`
-		Error string `json:"error"`
+func NewValidationError(c echo.Context, e validator.ValidationErrors) error {
+	errorMessages := make(map[string]string)
+
+	for _, err := range e {
+		fieldName := strings.ToLower(err.StructField())
+		errorMessages[fieldName] = fmt.Sprintf("Field validation for '%s' failed on the '%s' tag", err.StructField(), err.Tag())
 	}
 
-	var details []invalidField
-	var fields []string
-	for field := range errs {
-		fields = append(fields, field)
-	}
-
-	sort.Strings(fields)
-	for _, field := range fields {
-		details = append(details, invalidField{
-			Field: field,
-			Error: errs[field].Error(),
-		})
-	}
-
-	return HttpError{
-		ErrStatus:  http.StatusBadRequest,
-		ErrError:   ErrBadRequest.Error(),
-		ErrDetails: details,
-	}
+	return c.JSON(http.StatusBadRequest, Error{
+		Code:    http.StatusBadRequest,
+		Message: "Validation Error",
+		Error:   errorMessages,
+	})
 }
 
 // Parse Http Error
