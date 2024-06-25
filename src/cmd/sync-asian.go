@@ -122,11 +122,11 @@ func (s *SyncAsian) Execute() {
 	var wg sync.WaitGroup
 
 	categoryChannel := make(chan CategoryResponseData)
-	// categoryWorkerNum := numCpu
-	// for i := 0; i < categoryWorkerNum; i++ {
-	wg.Add(1)
-	go s.syncCategory(&wg, categoryChannel)
-	// }
+	categoryWorkerNum := numCpu
+	for i := 0; i < categoryWorkerNum; i++ {
+		wg.Add(1)
+		go s.syncCategory(&wg, categoryChannel)
+	}
 	s.getCategory(1, categoryChannel)
 	s.getCategory(2, categoryChannel)
 	close(categoryChannel)

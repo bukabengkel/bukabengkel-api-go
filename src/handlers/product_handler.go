@@ -38,6 +38,9 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 	dto := request.ProductListDTO{
 		StoreID: uint(storeId),
 	}
+	if err := ctx.Bind(&dto); err != nil {
+		return err
+	}
 
 	products, count, err := h.usecase.List(ctx.Request().Context(), dto)
 	if err != nil {

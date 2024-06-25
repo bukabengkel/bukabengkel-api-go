@@ -71,5 +71,5 @@ func Register(
 	startTime := time.Now()
 	rootCmd.Execute()
 
-	fmt.Println("Time Executed : %a", time.Since(startTime))
+	fmt.Printf("Time Executed : %s", time.Since(startTime))
 }

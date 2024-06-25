@@ -30,6 +30,9 @@ func NewProductDistributorHandler(
 
 func (h *ProductDistributorHandler) List(ctx echo.Context) (err error) {
 	dto := request.ProductDistributorListDTO{}
+	if err := ctx.Bind(&dto); err != nil {
+		return err
+	}
 
 	products, count, err := h.usecase.List(ctx.Request().Context(), dto)
 	if err != nil {
