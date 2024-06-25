@@ -31,6 +31,12 @@ type ResponseErrorMessage struct {
 	Trace   interface{} `json:"trace,omitempty"`
 }
 
+type Error struct {
+	Message string      `json:"message"`
+	Code    int         `json:"code"`
+	Error   interface{} `json:"error"`
+}
+
 func ResponseJSON(
 	ctx echo.Context,
 	httpCode int,

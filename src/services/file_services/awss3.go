@@ -117,7 +117,6 @@ func (s *S3Service) Upload(category string, fileUrl string) (*S3UploadResponse, 
 }
 
 func (s *S3Service) Delete(filepath string) error {
-	fmt.Println(filepath)
 	_, err := s.Client.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: &s.Bucket,
 		Key:    &filepath,

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 
@@ -56,7 +55,6 @@ func main() {
 	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
 
 	e := echo.New()
-	// e.Use(mw.CORS())
 	e.Use(middleware.CORSMiddleware())
 
 	handlers.NewProductHandler(e, middleware, productUsecase)
@@ -78,18 +76,7 @@ func main() {
 	}
 	c.Start()
 
-	defer func() {
-		if r := recover(); r != nil {
-			log.Println("Application failed to start:", r)
-			os.Exit(1)
-		}
-	}()
-
-	go func() {
-		if err := e.Start(fmt.Sprintf(":%s", configApp.Port)); err != nil && err != http.ErrServerClosed {
-			e.Logger.Fatal(err)
-		}
-	}()
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", configApp.Port)))
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)

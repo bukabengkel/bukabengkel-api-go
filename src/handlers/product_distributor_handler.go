@@ -29,9 +29,15 @@ func NewProductDistributorHandler(
 }
 
 func (h *ProductDistributorHandler) List(ctx echo.Context) (err error) {
-	dto := request.ProductDistributorListDTO{}
-	if err := ctx.Bind(&dto); err != nil {
-		return err
+	dto := request.ProductDistributorListDTO{
+		Page:          ctx.QueryParam("page"),
+		PerPage:       ctx.QueryParam("perPage"),
+		Sort:          ctx.QueryParam("sort"),
+		Keyword:       ctx.QueryParam("keyword"),
+		DistributorID: ctx.QueryParam("distributorId"),
+		Name:          ctx.QueryParam("name"),
+		Code:          ctx.QueryParam("code"),
+		RemoteUpdate:  ctx.QueryParam("remoteUpdate"),
 	}
 
 	products, count, err := h.usecase.List(ctx.Request().Context(), dto)
