@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -70,7 +71,17 @@ func ResponseError(
 	return nil
 }
 
-func BuildMeta(page int, perPage int, count int) *Meta {
+func BuildMeta(pageString string, perPageString string, count int) *Meta {
+	page, err := strconv.Atoi(pageString)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	perPage, err := strconv.Atoi(perPageString)
+	if err != nil || perPage < 1 || perPage > 100 {
+		perPage = 10
+	}
+
 	return &Meta{
 		Page:      page,
 		PerPage:   perPage,

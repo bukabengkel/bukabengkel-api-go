@@ -33,8 +33,8 @@ type ProductDistributor struct {
 	UpdatedAt        time.Time          `bun:"updated_at"`
 	RemoteUpdate     bool               `bun:"remote_update"`
 
-	Category    *ProductCategoryDistributor `bun:"rel:belongs-to, join:category_id=id"`
-	Distributor *Distributor                `bun:"rel:belongs-to"`
+	Category    *ProductCategoryDistributor `bun:"rel:belongs-to,join:category_id=id"`
+	Distributor *Distributor                `bun:"rel:belongs-to,join:distributor_id=id"`
 }
 
 type ProductBulkPrice struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gotidy/ptr"
 	"github.com/peang/bukabengkel-api-go/src/models"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 	"github.com/uptrace/bun"
@@ -17,7 +18,7 @@ type ProductRepository struct {
 type ProductRepositoryFilter struct {
 	Name          *string
 	CategoryId    *string
-	StoreID       *int64
+	StoreID       *uint
 	StockMoreThan *uint
 }
 
@@ -38,7 +39,7 @@ func (r *ProductRepository) queryBuilder(query *bun.SelectQuery, cond ProductRep
 	}
 
 	if cond.StoreID != nil {
-		query.Where("? = ?", bun.Ident("product.store_id"), cond.StoreID)
+		query.Where("? = ?", bun.Ident("product.store_id"), *cond.StoreID)
 	}
 
 	if cond.StockMoreThan != nil {
@@ -70,14 +71,14 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 	}
 
 	var entityProducts []models.Product
-	var entityProductIds []*uint64
+	var entityProductIds []uint
 	for _, p := range products {
 		entityProductIds = append(entityProductIds, p.ID)
 		entityProducts = append(entityProducts, p)
 	}
 
 	images, err := r.imageRepository.Find(ctx, 1, 50, "id", ImageRepositoryFilter{
-		EntityIDS:  entityProductIds,
+		EntityIDS:  ptr.Of(entityProductIds),
 		EntityType: utils.Uint(1),
 	})
 
@@ -85,7 +86,7 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 		for key, p := range entityProducts {
 			var productImages []models.Image
 			for _, img := range images {
-				if img.EntityID == *p.ID {
+				if img.EntityID == p.ID {
 					img.Path = r.imageRepository.s3service.BuildUrl(img.Path, 500, 500)
 					productImages = append(productImages, img)
 				}

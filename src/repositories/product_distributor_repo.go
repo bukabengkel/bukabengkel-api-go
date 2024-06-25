@@ -60,11 +60,11 @@ func (r *ProductDistributorRepository) updateQueryBuilder(
 	values ProductDistributorRepositoryValues,
 ) *bun.UpdateQuery {
 	if filter.DistributorID != nil {
-		query.Where("? = ?", bun.Ident("product_distributor.distributor_id"), filter.DistributorID)
+		query.Where("? = ?", bun.Ident("distributor_id"), filter.DistributorID)
 	}
 
 	if values.RemoteUpdate != nil {
-		query.Set("? = ?", bun.Ident("product_distributor.remote_update"), values.RemoteUpdate)
+		query.Set("? = ?", bun.Ident("remote_update"), values.RemoteUpdate)
 	}
 
 	return query
@@ -75,11 +75,11 @@ func (r *ProductDistributorRepository) deleteQueryBuilder(
 	filter ProductDistributorRepositoryFilter,
 ) *bun.DeleteQuery {
 	if filter.DistributorID != nil {
-		query.Where("? = ?", bun.Ident("product_distributor.distributor_id"), filter.DistributorID)
+		query.Where("? = ?", bun.Ident("distributor_id"), filter.DistributorID)
 	}
 
 	if filter.RemoteUpdate != nil {
-		query.Where("? = ?", bun.Ident("product_distributor.remote_update"), filter.RemoteUpdate)
+		query.Where("? = ?", bun.Ident("remote_update"), filter.RemoteUpdate)
 	}
 
 	return query

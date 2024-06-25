@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/peang/bukabengkel-api-go/src/cmd"
 	"github.com/peang/bukabengkel-api-go/src/config"
@@ -58,6 +59,7 @@ func Register(
 	}
 
 	asian := cmd.NewSyncAsian(logger, productDistributorRepo, productCategoryDistributorRepo, imageRepo, s3service)
+
 	syncAsianCmd := &cobra.Command{
 		Use:   "sync-asian",
 		Short: "Sync Asian Products",
@@ -66,5 +68,8 @@ func Register(
 
 	rootCmd.AddCommand(syncAsianCmd)
 
+	startTime := time.Now()
 	rootCmd.Execute()
+
+	fmt.Println("Time Executed : %a", time.Since(startTime))
 }
