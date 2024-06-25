@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -118,11 +117,10 @@ func (s *SyncAsian) Execute() {
 		},
 	)
 
-	numCpu := runtime.NumCPU()
 	var wg sync.WaitGroup
 
 	categoryChannel := make(chan CategoryResponseData)
-	categoryWorkerNum := numCpu
+	categoryWorkerNum := 2
 	for i := 0; i < categoryWorkerNum; i++ {
 		wg.Add(1)
 		go s.syncCategory(&wg, categoryChannel)
@@ -133,7 +131,7 @@ func (s *SyncAsian) Execute() {
 	wg.Wait()
 
 	productChannel := make(chan ProductResponseData)
-	productWorkerNum := numCpu
+	productWorkerNum := 20
 	for i := 0; i < productWorkerNum; i++ {
 		wg.Add(1)
 		go s.syncProduct(&wg, productChannel)
