@@ -118,26 +118,26 @@ func (s *SyncAsian) Execute() {
 		},
 	)
 
-	categoryChannel := make(chan CategoryResponseData)
-	productChannel := make(chan ProductResponseData)
-
+	numCpu := runtime.NumCPU()
 	var wg sync.WaitGroup
-	categoryWorkerNum := 2
-	productWorkerNum := runtime.NumCPU() - categoryWorkerNum
 
-	for i := 0; i < categoryWorkerNum; i++ {
-		wg.Add(1)
-		go s.syncCategory(&wg, categoryChannel)
-	}
+	categoryChannel := make(chan CategoryResponseData)
+	// categoryWorkerNum := numCpu
+	// for i := 0; i < categoryWorkerNum; i++ {
+	wg.Add(1)
+	go s.syncCategory(&wg, categoryChannel)
+	// }
+	s.getCategory(1, categoryChannel)
+	s.getCategory(2, categoryChannel)
+	close(categoryChannel)
+	wg.Wait()
 
+	productChannel := make(chan ProductResponseData)
+	productWorkerNum := numCpu
 	for i := 0; i < productWorkerNum; i++ {
 		wg.Add(1)
 		go s.syncProduct(&wg, productChannel)
 	}
-
-	s.getCategory(1, categoryChannel)
-	s.getCategory(2, categoryChannel)
-	close(categoryChannel)
 
 	s.getProduct(1, productChannel)
 	s.getProduct(2, productChannel)
@@ -145,6 +145,7 @@ func (s *SyncAsian) Execute() {
 	wg.Wait()
 
 	s.remove()
+
 }
 
 func (s *SyncAsian) getCategory(cat uint, ch chan<- CategoryResponseData) {
@@ -195,11 +196,13 @@ func (s *SyncAsian) syncCategory(wg *sync.WaitGroup, ch <-chan CategoryResponseD
 				RemoteUpdate:  true,
 			}
 
+			fmt.Printf("Creating Category %v\n", category.Code)
 			s.productCategoryDistributorRepo.Save(&newPc)
 		} else {
 			pc.Name = category.Name
 			pc.RemoteUpdate = true
 
+			fmt.Printf("Updating Category %v\n", category.Code)
 			s.productCategoryDistributorRepo.Update(pc)
 		}
 	}
@@ -339,6 +342,7 @@ func (s *SyncAsian) syncProduct(wg *sync.WaitGroup, ch <-chan ProductResponseDat
 				return
 			}
 
+			fmt.Printf("Product %v Created\n", product.Code)
 			totalCreate++
 		} else {
 			fmt.Printf("Product %v Found, Updating\n", product.Code)
