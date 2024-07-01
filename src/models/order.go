@@ -8,7 +8,7 @@ import (
 )
 
 type Order struct {
-	bun.BaseModel `bun:"table:orders"`
+	bun.BaseModel `bun:"table:order"`
 
 	ID             int       `bun:"id,pk,nullzero"`
 	Key            uuid.UUID `bun:"key,type:uuid,notnull,unique"`

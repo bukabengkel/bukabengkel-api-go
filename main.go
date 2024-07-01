@@ -48,8 +48,10 @@ func main() {
 	productDistRepo := repository.NewProductDistributorRepository(db, s3service)
 	productCatDistRepo := repository.NewProductCategoryDistributorRepository(db)
 	productExportLogRepo := repository.NewProductExportLogRepository(db)
+	orderRepo := repository.NewOrderRepository(db)
 
 	// Usecases
+	reportUsecase := usecase.NewReportUsecase(orderRepo)
 	productUsecase := usecase.NewProductUsecase(productRepo)
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo)
 	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
@@ -57,6 +59,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.CORSMiddleware())
 
+	handlers.NewReportHandler(e, middleware, reportUsecase)
 	handlers.NewProductHandler(e, middleware, productUsecase)
 	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
 	handlers.NewProductExportLogHandler(e, middleware, productExportLogUsecase)
