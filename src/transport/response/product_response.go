@@ -4,7 +4,7 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/models"
 )
 
-type ProductResponse struct {
+type productDetailResponse struct {
 	ID               string  `json:"id"`
 	Store            string  `json:"store"`
 	BrandID          *uint64 `json:"brandId"`
@@ -25,8 +25,8 @@ type ProductResponse struct {
 	StatusString     string  `json:"statusString"`
 }
 
-func ProductDetailResponse(product *models.Product) *ProductResponse {
-	response := &ProductResponse{
+func ProductDetailResponse(product *models.Product) *productDetailResponse {
+	response := &productDetailResponse{
 		ID:               product.Key,
 		Store:            product.Store.Name,
 		CategoryID:       product.CategoryID,
@@ -60,8 +60,8 @@ func ProductDetailResponse(product *models.Product) *ProductResponse {
 	return response
 }
 
-func ProductListResponse(products *[]models.Product) []ProductResponse {
-	var responses = make([]ProductResponse, 0)
+func ProductListResponse(products *[]models.Product) []productDetailResponse {
+	var responses = make([]productDetailResponse, 0)
 	for _, product := range *products {
 		response := ProductDetailResponse(&product)
 		responses = append(responses, *response)

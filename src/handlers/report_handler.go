@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
+	"github.com/peang/bukabengkel-api-go/src/transport/response"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 )
@@ -52,7 +53,7 @@ func (h *ReportHandler) SalesReport(ctx echo.Context) (err error) {
 		ctx,
 		http.StatusOK,
 		"Report dashboard",
-		salesReport,
+		response.ReportSalesResponse(salesReport.TotalSales, salesReport.TotalNett, salesReport.TotalProduct),
 		nil,
 	)
 }

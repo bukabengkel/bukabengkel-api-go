@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -37,21 +36,31 @@ func (r *OrderRepository) queryBuilder(query *bun.SelectQuery, cond OrderReposit
 }
 
 func (r *OrderRepository) CountReport(ctx context.Context, filter OrderRepositoryFilter) (*struct {
-	totalSales float32
+	TotalSales   float32
+	TotalNett    float32
+	TotalProduct int
 }, error) {
 	var report struct {
-		TotalSales float32 `bun:"total"`
+		TotalSales   float32
+		TotalNett    float32
+		TotalProduct int
 	}
-	sl := r.db.NewSelect().Table("order")
+	sl := r.db.NewSelect().Table("order").Join(`LEFT JOIN order_item as oi ON "oi".id = "order".id`)
 	sl = r.queryBuilder(sl, filter)
 
-	err := sl.ColumnExpr("SUM(total) as total_sales").Scan(ctx, &report)
+	err := sl.ColumnExpr(`SUM("order".total) as total_sales, SUM("order".total_nett) as total_nett, count("oi".id) as total_product`).
+		Scan(ctx, &report)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(report)
-	return &struct{ totalSales float32 }{
-		totalSales: report.TotalSales,
+	return &struct {
+		TotalSales   float32
+		TotalNett    float32
+		TotalProduct int
+	}{
+		TotalSales:   report.TotalSales,
+		TotalNett:    report.TotalNett,
+		TotalProduct: report.TotalProduct,
 	}, nil
 }

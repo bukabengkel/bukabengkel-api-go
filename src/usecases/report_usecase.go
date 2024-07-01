@@ -11,8 +11,9 @@ import (
 
 type ReportUsecase interface {
 	Salesreport(ctx context.Context, dto *request.SalesReportDTO) (*struct {
-		totalOrder      float32
-		totalOrderPrice float32
+		TotalSales   float32
+		TotalNett    float32
+		TotalProduct int
 	}, error)
 }
 
@@ -29,8 +30,9 @@ func NewReportUsecase(
 }
 
 func (u *reportUsecase) Salesreport(ctx context.Context, dto *request.SalesReportDTO) (result *struct {
-	totalOrder      float32
-	totalOrderPrice float32
+	TotalSales   float32
+	TotalNett    float32
+	TotalProduct int
 }, err error) {
 	var startDate, endDate time.Time
 	if dto.StartDate == "" {
@@ -46,10 +48,15 @@ func (u *reportUsecase) Salesreport(ctx context.Context, dto *request.SalesRepor
 		endDate = startDate.Add(8 * 24 * time.Hour)
 		// instead of 7, we add 8 days so it will show 7 days
 	} else {
-		endDate, err = time.Parse("2006-01-02", dto.StartDate)
+		endDate, err = time.Parse("2006-01-02", dto.EndDate)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	rangeDate := endDate.Sub(startDate).Hours() / 24
+	if rangeDate > 90 {
+		return nil, fmt.Errorf("date_range_maximum_is_90_days")
 	}
 
 	summary, _ := u.orderRepository.CountReport(ctx, repository.OrderRepositoryFilter{
@@ -58,6 +65,5 @@ func (u *reportUsecase) Salesreport(ctx context.Context, dto *request.SalesRepor
 		EndDate:   &endDate,
 	})
 
-	fmt.Println(summary)
-	return nil, nil
+	return summary, nil
 }
