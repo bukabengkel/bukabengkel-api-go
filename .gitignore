@@ -1,38 +1,5 @@
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Test binary, build with `go test -c`
-*.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-
-# Jetbrains GoLand
-.idea/
-
-# VS Code
-.vscode/
-
-# Test Cmd
-cmd/test/
-
 .env
-build/_output
 bin/
-deploy/dev/public_keys/*
-deploy/dev/private_keys/*
-
+src/cmd/logs/*.**
 vendor/
-
-# ignore generated / rendered sql migration files
-*.generated.sql
-
-preparedev.sh
-
 tmp/
-
-amos

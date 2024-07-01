@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -99,6 +100,17 @@ func (s *SyncAsian) ExecuteViaCmd(cmd *cobra.Command, args []string) {
 }
 
 func (s *SyncAsian) Execute() {
+	file, err := os.Create("./src/cmd/logs/sync-asian-error.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	err = file.Truncate(0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	s.productCategoryDistributorRepo.UpdateWithCondition(
 		repository.ProductCategoryDistributorRepositoryFilter{
 			DistributorID: utils.Uint64(1),
@@ -118,47 +130,69 @@ func (s *SyncAsian) Execute() {
 	)
 
 	var wg sync.WaitGroup
+	var mt sync.Mutex
+	var createdCategory, updatedCategory, createdProduct, updatedProduct int
 
+	errorChannel := make(chan error)
+	wg.Add(1)
+	go s.syncProductErrorWriter(&wg, errorChannel)
+
+	// Category Sync
 	categoryChannel := make(chan CategoryResponseData)
 	categoryWorkerNum := 2
 	for i := 0; i < categoryWorkerNum; i++ {
 		wg.Add(1)
-		go s.syncCategory(&wg, categoryChannel)
+		go s.syncCategory(&wg, &mt, categoryChannel, errorChannel, &createdCategory, &updatedCategory)
 	}
-	s.getCategory(1, categoryChannel)
-	s.getCategory(2, categoryChannel)
-	close(categoryChannel)
-	wg.Wait()
 
+	// Product Sync
 	productChannel := make(chan ProductResponseData)
-	productWorkerNum := 20
+	productWorkerNum := 50
 	for i := 0; i < productWorkerNum; i++ {
 		wg.Add(1)
-		go s.syncProduct(&wg, productChannel)
+		go s.syncProduct(
+			&wg,
+			&mt,
+			productChannel,
+			errorChannel,
+			&createdProduct,
+			&updatedProduct,
+		)
 	}
 
-	s.getProduct(1, productChannel)
-	s.getProduct(2, productChannel)
+	s.getCategory(1, categoryChannel, errorChannel)
+	s.getCategory(2, categoryChannel, errorChannel)
+	fmt.Println("")
+	close(categoryChannel)
+
+	s.getProduct(1, productChannel, errorChannel)
+	s.getProduct(2, productChannel, errorChannel)
+	fmt.Println("")
 	close(productChannel)
+
+	close(errorChannel)
 	wg.Wait()
 
 	s.remove()
 
 }
 
-func (s *SyncAsian) getCategory(cat uint, ch chan<- CategoryResponseData) {
-
-	s.logger.Infof("Getting Category %v", cat)
-
+func (s *SyncAsian) getCategory(
+	cat uint,
+	ch chan<- CategoryResponseData,
+	chErr chan<- error,
+) {
 	resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/list/%v", cat), "GET", 5)
 	if err != nil {
-		s.logger.Fatalf("Failed to Fetch %v", err)
+		chErr <- fmt.Errorf("failed_to_fetch %v", err)
+		return
 	}
 
 	var response CategoryResponse
 	err = json.Unmarshal([]byte(resp), &response)
 	if err != nil {
-		s.logger.Fatalf("Failed to parse %v", err)
+		chErr <- fmt.Errorf("failed_to_parse %v", err)
+		return
 	}
 
 	for _, category := range response.Content.Data {
@@ -166,19 +200,25 @@ func (s *SyncAsian) getCategory(cat uint, ch chan<- CategoryResponseData) {
 	}
 }
 
-func (s *SyncAsian) syncCategory(wg *sync.WaitGroup, ch <-chan CategoryResponseData) {
+func (s *SyncAsian) syncCategory(
+	wg *sync.WaitGroup,
+	mt *sync.Mutex,
+	ch <-chan CategoryResponseData,
+	chErr chan<- error,
+	totalCreated *int,
+	totalUpdated *int,
+) {
 	defer wg.Done()
 
-	var errorCount int
 	for category := range ch {
+		fmt.Printf("\rCategory Created %v Category Updated %v", *totalCreated, *totalUpdated)
+
 		pc, err := s.productCategoryDistributorRepo.FindOne(repository.ProductCategoryDistributorRepositoryFilter{
 			DistributorID: utils.Uint64(1),
 			Code:          &category.Code,
 		})
 		if err != nil {
-			s.logger.Fatal(err)
-			fmt.Printf("Skipping %v", category.Name)
-			errorCount++
+			chErr <- fmt.Errorf("error_find_category %v", err)
 			continue
 		}
 
@@ -194,37 +234,49 @@ func (s *SyncAsian) syncCategory(wg *sync.WaitGroup, ch <-chan CategoryResponseD
 				RemoteUpdate:  true,
 			}
 
-			fmt.Printf("Creating Category %v\n", category.Code)
 			s.productCategoryDistributorRepo.Save(&newPc)
+
+			mt.Lock()
+			*totalCreated++
+			mt.Unlock()
 		} else {
 			pc.Name = category.Name
 			pc.RemoteUpdate = true
 
-			fmt.Printf("Updating Category %v\n", category.Code)
 			s.productCategoryDistributorRepo.Update(pc)
+
+			mt.Lock()
+			*totalUpdated++
+			mt.Unlock()
 		}
 	}
 }
 
-func (s *SyncAsian) getProduct(cat uint, ch chan<- ProductResponseData) {
+func (s *SyncAsian) getProduct(
+	cat uint,
+	ch chan<- ProductResponseData,
+	chErr chan<- error,
+) {
 	var errorCount uint
-	var totalCreate uint
-	var totalUpdate uint
+
 	page := 1
 	hasResult := true
 	for hasResult {
 		var errorCountPerPage uint
 
-		fmt.Printf("Getting Product Page %v\n", page)
-		resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/product/%v?page=%v&per_page=50&sort=Terbaru", cat, page), "GET", 5)
+		resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/product/%v?page=%v&per_page=200&sort=Terbaru", cat, page), "GET", 5)
 		if err != nil {
-			log.Fatalf("Failed to Fetch %v", err)
+			errNew := fmt.Errorf("failed_to_fetch %v", err)
+			chErr <- errNew
+			return
 		}
 
 		var response ProductListResponse
 		err = json.Unmarshal([]byte(resp), &response)
 		if err != nil {
-			log.Fatalf("Failed to parse %v", err)
+			errNew := fmt.Errorf("failed_to_parse %v", err)
+			chErr <- errNew
+			return
 		}
 
 		if len(response.Content.Data) == 0 {
@@ -238,50 +290,47 @@ func (s *SyncAsian) getProduct(cat uint, ch chan<- ProductResponseData) {
 
 		page++
 		errorCount += errorCountPerPage
-
-		// time.Sleep(1 * time.Second)
-		fmt.Printf("Done Processed Page %v, with %v of Error(s)\n", page, errorCountPerPage)
 	}
-
-	fmt.Printf("Done Processed: %v Created, %v Updated\n", totalCreate, totalUpdate)
 }
 
-func (s *SyncAsian) syncProduct(wg *sync.WaitGroup, ch <-chan ProductResponseData) {
+func (s *SyncAsian) syncProduct(
+	wg *sync.WaitGroup,
+	mt *sync.Mutex,
+	ch <-chan ProductResponseData,
+	chErr chan<- error,
+	totalCreated *int,
+	totalUpdated *int,
+) {
 	defer wg.Done()
 
-	var errorCountPerPage, totalCreate, totalUpdate int
-
 	for product := range ch {
+		fmt.Printf("\rProduct Created %v Product Updated %v", *totalCreated, *totalUpdated)
+
 		p, err := s.productDistributorRepo.FindOne(repository.ProductDistributorRepositoryFilter{
 			DistributorID: utils.Uint64(1),
 			Code:          &product.Code,
 		})
-
 		if err != nil {
-			errorCountPerPage++
-			log.Fatalf("Skipping %v, Error Getting Product", product.Name)
+			newErr := fmt.Errorf("error_getting_product;%s;%v", product.Catcode, err.Error())
+			chErr <- newErr
 			return
 		}
 
 		if p == nil {
-			fmt.Printf("Product %v Not Found, Creating\n", product.Code)
-
 			cat, err := s.productCategoryDistributorRepo.FindOne(repository.ProductCategoryDistributorRepositoryFilter{
 				DistributorID: utils.Uint64(1),
 				Code:          &product.Catcode,
 			})
 
 			if cat == nil {
-				s.logger.Fatal(err)
-				fmt.Printf("Skipping %v, Unknown Product Category", product.Catcode)
-				errorCountPerPage++
+				newErr := fmt.Errorf("unknown_product_category;%s;%v", product.Catcode, err.Error())
+				chErr <- newErr
 				return
 			}
 
 			if err != nil {
-				s.logger.Fatal(err)
-				fmt.Printf("Skipping %v, Error Getting Product Category", product.Name)
-				errorCountPerPage++
+				newErr := fmt.Errorf("error_getting_product_category;%s;%v", product.Name, err.Error())
+				chErr <- newErr
 				return
 			}
 
@@ -291,9 +340,8 @@ func (s *SyncAsian) syncProduct(wg *sync.WaitGroup, ch <-chan ProductResponseDat
 			if product.Images != "" {
 				imgPtr, err := s.s3service.Upload(models.ImageProductDistributor, product.Images)
 				if err != nil {
-					s.logger.Fatal(err)
-					fmt.Printf("Skipping %v, Error Uploading to S3", product.Name)
-					errorCountPerPage++
+					newErr := fmt.Errorf("error_uploading_image;%s;%v", product.Name, err.Error())
+					chErr <- newErr
 					return
 				}
 				img = *imgPtr
@@ -334,17 +382,15 @@ func (s *SyncAsian) syncProduct(wg *sync.WaitGroup, ch <-chan ProductResponseDat
 
 			_, err = s.productDistributorRepo.Save(&newProductDistributor)
 			if err != nil {
-				s.logger.Fatal(err)
-				fmt.Printf("Skipping %v, Error Inserting", product.Name)
-				errorCountPerPage++
+				newErr := fmt.Errorf("error_inserting_product;%s;%v", product.Name, err.Error())
+				chErr <- newErr
 				return
 			}
 
-			fmt.Printf("Product %v Created\n", product.Code)
-			totalCreate++
+			mt.Lock()
+			*totalCreated++
+			mt.Unlock()
 		} else {
-			fmt.Printf("Product %v Found, Updating\n", product.Code)
-
 			p.Name = product.Name
 			p.Unit = product.Unit
 			p.Stock = float64(product.AvailableQty)
@@ -354,21 +400,39 @@ func (s *SyncAsian) syncProduct(wg *sync.WaitGroup, ch <-chan ProductResponseDat
 
 			_, err := s.productDistributorRepo.Update(p)
 			if err != nil {
-				errorCountPerPage++
-				log.Fatalf("Skipping %v, Error Updating", product.Name)
+				newErr := fmt.Errorf("error_updating_product;%s;%v", product.Name, err.Error())
+				chErr <- newErr
 				return
 			}
 
-			totalUpdate++
+			mt.Lock()
+			*totalUpdated++
+			mt.Unlock()
 		}
 	}
 }
 
+func (s *SyncAsian) syncProductErrorWriter(wg *sync.WaitGroup, ch <-chan error) {
+	defer wg.Done()
+
+	file, err := os.OpenFile("./src/cmd/logs/sync-asian-error.txt", os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	for errorStr := range ch {
+		_, err = file.WriteString(errorStr.Error() + "\n")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
 func (s *SyncAsian) remove() {
 	hasResult := true
 
 	for hasResult {
-		products, count, err := s.productDistributorRepo.List(context.TODO(), 1, 10, "id", repository.ProductDistributorRepositoryFilter{
+		products, _, err := s.productDistributorRepo.List(context.TODO(), 1, 10, "id", repository.ProductDistributorRepositoryFilter{
 			DistributorID: utils.Uint64(1),
 			RemoteUpdate:  utils.Boolean(false),
 		})
@@ -377,7 +441,6 @@ func (s *SyncAsian) remove() {
 			log.Fatal(err)
 		}
 
-		fmt.Println(count)
 		if len(*products) == 0 {
 			hasResult = false
 			break
