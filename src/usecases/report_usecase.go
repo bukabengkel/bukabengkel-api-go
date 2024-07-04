@@ -36,17 +36,13 @@ type ProductOrderResult struct {
 
 func NewReportUsecase(
 	orderRepository *repository.OrderRepository,
-	productRepository *repository.ProductRepository,
 ) ReportUsecase {
 	return &reportUsecase{
-		orderRepository:   *orderRepository,
-		productRepository: *productRepository,
+		orderRepository: *orderRepository,
 	}
 }
 
 func (u *reportUsecase) dateReportValidator(start string, end string) (startDate *time.Time, endDate *time.Time, err error) {
-
-	// var startDate, endDate time.Time
 	if start == "" {
 		startDate = ptr.Of(time.Now().Add(-7 * 24 * time.Hour))
 	} else {
@@ -62,6 +58,7 @@ func (u *reportUsecase) dateReportValidator(start string, end string) (startDate
 		// instead of 7, we add 8 days so it will show 7 days
 	} else {
 		endDateTime, err := time.Parse("2006-01-02", end)
+		endDateTime = endDateTime.Add(24 * time.Hour)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -109,7 +106,7 @@ func (u *reportUsecase) ProductSalesReport(ctx context.Context, dto *request.Pro
 		return nil, nil, err
 	}
 
-	summary, count, err := u.productRepository.ProductSalesReport(ctx, page, perPage, repository.ProductRepositoryFilter{
+	summary, count, err := u.orderRepository.ProductSalesReport(ctx, page, perPage, repository.OrderRepositoryFilter{
 		StoreID:   &dto.StoreID,
 		StartDate: startDate,
 		EndDate:   endDate,

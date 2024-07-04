@@ -48,11 +48,11 @@ func NewOrderRepository(
 
 func (r *OrderRepository) queryBuilder(query *bun.SelectQuery, cond OrderRepositoryFilter) *bun.SelectQuery {
 	if cond.StoreID != nil {
-		query.Where("? = ?", bun.Ident("store_id"), *cond.StoreID)
+		query.Where("? = ?", bun.Ident("order.store_id"), *cond.StoreID)
 	}
 
 	if cond.StartDate != nil && cond.EndDate != nil {
-		query.Where("? BETWEEN ? AND ?", bun.Ident("order_date"), cond.StartDate, cond.EndDate)
+		query.Where("? BETWEEN ? AND ?", bun.Ident("order.order_date"), cond.StartDate, cond.EndDate)
 	}
 
 	return query
@@ -88,7 +88,7 @@ func (r *OrderRepository) OrderSalesReport(ctx context.Context, filter OrderRepo
 	return &result, nil
 }
 
-func (r *ProductRepository) ProductSalesReport(ctx context.Context, page int, perPage int, filter ProductRepositoryFilter) (*[]productOrderResult, *int, error) {
+func (r *OrderRepository) ProductSalesReport(ctx context.Context, page int, perPage int, filter OrderRepositoryFilter) (*[]productOrderResult, *int, error) {
 	offset, limit := utils.GenerateOffsetLimit(page, perPage)
 
 	var results []productOrderResult

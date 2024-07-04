@@ -47,7 +47,7 @@ func (h *ReportHandler) OrderSalesReport(ctx echo.Context) (err error) {
 
 	salesReport, err := h.usecase.OrderSalesReport(ctx.Request().Context(), &dto)
 	if err != nil {
-		return ctx.JSON(utils.ParseHttpError(err))
+		return utils.NewHttpError(http.StatusBadRequest, err.Error(), nil)
 	}
 
 	return utils.ResponseJSON(
@@ -80,7 +80,7 @@ func (h *ReportHandler) ProductSalesReport(ctx echo.Context) (err error) {
 
 	productReport, count, err := h.usecase.ProductSalesReport(ctx.Request().Context(), &dto)
 	if err != nil {
-		return ctx.JSON(utils.ParseHttpError(err))
+		return utils.NewHttpError(http.StatusBadRequest, err.Error(), nil)
 	}
 
 	return utils.ResponseJSON(
