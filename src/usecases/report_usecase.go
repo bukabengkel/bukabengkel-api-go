@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gotidy/ptr"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
+	"github.com/peang/bukabengkel-api-go/src/utils"
 )
 
 type ReportUsecase interface {
@@ -14,7 +16,8 @@ type ReportUsecase interface {
 }
 
 type reportUsecase struct {
-	orderRepository repository.OrderRepository
+	orderRepository   repository.OrderRepository
+	productRepository repository.ProductRepository
 }
 
 type salesOrderResult struct {
@@ -23,44 +26,64 @@ type salesOrderResult struct {
 	TotalProduct int
 }
 
+type productOrderResult struct {
+	TotalSales   float32
+	TotalNett    float32
+	TotalProduct int
+}
+
 func NewReportUsecase(
 	orderRepository *repository.OrderRepository,
+	productRepository *repository.ProductRepository,
 ) ReportUsecase {
 	return &reportUsecase{
-		orderRepository: *orderRepository,
+		orderRepository:   *orderRepository,
+		productRepository: *productRepository,
 	}
 }
 
-func (u *reportUsecase) Salesreport(ctx context.Context, dto *request.SalesReportDTO) (result *salesOrderResult, err error) {
-	var startDate, endDate time.Time
-	if dto.StartDate == "" {
-		startDate = time.Now().Add(-7 * 24 * time.Hour)
+func (u *reportUsecase) dateReportValidator(start string, end string) (startDate *time.Time, endDate *time.Time, err error) {
+
+	// var startDate, endDate time.Time
+	if start == "" {
+		startDate = ptr.Of(time.Now().Add(-7 * 24 * time.Hour))
 	} else {
-		startDate, err = time.Parse("2006-01-02", dto.StartDate)
+		startDateTime, err := time.Parse("2006-01-02", start)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		startDate = &startDateTime
 	}
 
-	if dto.EndDate == "" {
-		endDate = startDate.Add(8 * 24 * time.Hour)
+	if end == "" {
+		endDate = ptr.Of(startDate.Add(8 * 24 * time.Hour))
 		// instead of 7, we add 8 days so it will show 7 days
 	} else {
-		endDate, err = time.Parse("2006-01-02", dto.EndDate)
+		endDateTime, err := time.Parse("2006-01-02", end)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		endDate = &endDateTime
 	}
 
-	rangeDate := endDate.Sub(startDate).Hours() / 24
+	rangeDate := endDate.Sub(*startDate).Hours() / 24
 	if rangeDate > 90 {
-		return nil, fmt.Errorf("date_range_maximum_is_90_days")
+		return nil, nil, fmt.Errorf("date_range_maximum_is_90_days")
 	}
 
-	summary, err := u.orderRepository.CountReport(ctx, repository.OrderRepositoryFilter{
+	return
+}
+
+func (u *reportUsecase) OrderSalesReport(ctx context.Context, dto *request.OrderSalesReportDTO) (result *salesOrderResult, err error) {
+	startDate, endDate, err := u.dateReportValidator(dto.StartDate, dto.EndDate)
+	if err != nil {
+		return nil, err
+	}
+
+	summary, _ := u.orderRepository.OrderSalesReport(ctx, repository.OrderRepositoryFilter{
 		StoreID:   &dto.StoreID,
-		StartDate: &startDate,
-		EndDate:   &endDate,
+		StartDate: startDate,
+		EndDate:   endDate,
 	})
 	if err != nil {
 		return nil, err
@@ -71,4 +94,27 @@ func (u *reportUsecase) Salesreport(ctx context.Context, dto *request.SalesRepor
 		TotalNett:    summary.TotalNett,
 		TotalProduct: summary.TotalProduct,
 	}, nil
+}
+
+func (u *reportUsecase) ProductSalesReport(ctx context.Context, dto *request.ProductSalesRxeportDTO) (*[]productOrderResult, error) {
+	startDate, endDate, err := u.dateReportValidator(dto.StartDate, dto.EndDate)
+	if err != nil {
+		return nil, err
+	}
+
+	page, perPage, err := utils.ParsePageAndPerPage(dto.Page, dto.PerPage)
+	if err != nil {
+		return nil, err
+	}
+
+	summary, _ := u.productRepository.ProductSalesReport(ctx, page, perPage, repository.ProductRepositoryFilter{
+		StoreID:   &dto.StoreID,
+		StartDate: startDate,
+		EndDate:   endDate,
+	})
+
+	fmt.Println(startDate, endDate)
+	fmt.Println(summary)
+
+	return nil, nil
 }

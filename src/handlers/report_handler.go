@@ -26,10 +26,11 @@ func NewReportHandler(
 	}
 
 	apiV1 := e.Group("/v1/reports")
-	apiV1.GET("/orders", handler.SalesReport, middleware.RBAC())
+	apiV1.GET("/orders", handler.OrderSalesReport, middleware.RBAC())
+	apiV1.GET("/products", handler.ProductSalesReport, middleware.RBAC())
 }
 
-func (h *ReportHandler) SalesReport(ctx echo.Context) (err error) {
+func (h *ReportHandler) OrderSalesReport(ctx echo.Context) (err error) {
 	storeId, err := strconv.Atoi(ctx.Get("store_id").(string))
 	if err != nil {
 		return ctx.JSON(utils.ParseHttpError(err))
@@ -38,13 +39,13 @@ func (h *ReportHandler) SalesReport(ctx echo.Context) (err error) {
 	startDate := ctx.QueryParam("start")
 	endDate := ctx.QueryParam("end")
 
-	dto := request.SalesReportDTO{
+	dto := request.OrderSalesReportDTO{
 		StoreID:   uint(storeId),
 		StartDate: startDate,
 		EndDate:   endDate,
 	}
 
-	salesReport, err := h.usecase.Salesreport(ctx.Request().Context(), &dto)
+	salesReport, err := h.usecase.OrderSalesReport(ctx.Request().Context(), &dto)
 	if err != nil {
 		return ctx.JSON(utils.ParseHttpError(err))
 	}
@@ -52,8 +53,41 @@ func (h *ReportHandler) SalesReport(ctx echo.Context) (err error) {
 	return utils.ResponseJSON(
 		ctx,
 		http.StatusOK,
-		"Report dashboard",
-		response.ReportSalesResponse(salesReport.TotalSales, salesReport.TotalNett, salesReport.TotalProduct),
+		"Order Sales Report",
+		response.OrderSalesReportResponse(salesReport.TotalSales, salesReport.TotalNett, salesReport.TotalProduct),
+		nil,
+	)
+}
+
+func (h *ReportHandler) ProductSalesReport(ctx echo.Context) (err error) {
+	storeId, err := strconv.Atoi(ctx.Get("store_id").(string))
+	if err != nil {
+		return ctx.JSON(utils.ParseHttpError(err))
+	}
+
+	startDate := ctx.QueryParam("start")
+	endDate := ctx.QueryParam("end")
+	page := ctx.QueryParam("page")
+	perPage := ctx.QueryParam("perPage")
+
+	dto := request.ProductSalesRxeportDTO{
+		StoreID:   uint(storeId),
+		StartDate: startDate,
+		EndDate:   endDate,
+		Page:      page,
+		PerPage:   perPage,
+	}
+
+	productReport, err := h.usecase.ProductSalesReport(ctx.Request().Context(), &dto)
+	if err != nil {
+		return ctx.JSON(utils.ParseHttpError(err))
+	}
+
+	return utils.ResponseJSON(
+		ctx,
+		http.StatusOK,
+		"Product Sales Report",
+		productReport,
 		nil,
 	)
 }
