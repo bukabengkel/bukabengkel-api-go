@@ -1,4 +1,4 @@
-package file_service
+package file_services
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ type S3Service struct {
 	BaseURL     string
 }
 
-func newAWSS3Service(config *config.Config) FileServiceInterface {
+func newAWSS3Service(config *config.Config) FileService {
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region:      aws.String("ap-southeast-1"),
 		Credentials: credentials.NewStaticCredentials(config.Storage.AccessKey, config.Storage.SecretKey, ""),

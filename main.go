@@ -14,6 +14,7 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/handlers"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
+	cache_service "github.com/peang/bukabengkel-api-go/src/services/cache_services"
 	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
@@ -41,6 +42,9 @@ func main() {
 	fileService, err := file_service.NewFileService(configApp)
 	utils.PanicIfNeeded(err)
 
+	cacheService, err := cache_service.NewCacheService(configApp)
+	utils.PanicIfNeeded(err)
+
 	middleware := middleware.NewMiddleware(enfocer, appLogger, jwtService)
 
 	// Repositories
@@ -49,7 +53,7 @@ func main() {
 	productDistRepo := repository.NewProductDistributorRepository(db, fileService)
 	productCatDistRepo := repository.NewProductCategoryDistributorRepository(db)
 	productExportLogRepo := repository.NewProductExportLogRepository(db)
-	orderRepo := repository.NewOrderRepository(db)
+	orderRepo := repository.NewOrderRepository(db, cacheService)
 
 	// Usecases
 	reportUsecase := usecase.NewReportUsecase(orderRepo)

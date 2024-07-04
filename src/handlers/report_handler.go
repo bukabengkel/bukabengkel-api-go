@@ -26,7 +26,7 @@ func NewReportHandler(
 	}
 
 	apiV1 := e.Group("/v1/reports")
-	apiV1.GET("", handler.SalesReport, middleware.RBAC())
+	apiV1.GET("/orders", handler.SalesReport, middleware.RBAC())
 }
 
 func (h *ReportHandler) SalesReport(ctx echo.Context) (err error) {

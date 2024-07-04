@@ -13,7 +13,7 @@ import (
 
 type ProductDistributorRepository struct {
 	db          *bun.DB
-	fileService file_service.FileServiceInterface
+	fileService file_service.FileService
 }
 
 type ProductDistributorRepositoryFilter struct {
@@ -27,7 +27,7 @@ type ProductDistributorRepositoryValues struct {
 	RemoteUpdate *bool
 }
 
-func NewProductDistributorRepository(db *bun.DB, fileService file_service.FileServiceInterface) *ProductDistributorRepository {
+func NewProductDistributorRepository(db *bun.DB, fileService file_service.FileService) *ProductDistributorRepository {
 	return &ProductDistributorRepository{
 		db:          db,
 		fileService: fileService,

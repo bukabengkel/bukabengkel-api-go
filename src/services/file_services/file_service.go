@@ -1,4 +1,4 @@
-package file_service
+package file_services
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/config"
 )
 
-type FileServiceInterface interface {
+type FileService interface {
 	BuildUrl(path string, width int, height int) string
 	Upload(category string, fileUrl string) (*FileUploadResponse, error)
 	Delete(filepath string) error
@@ -25,7 +25,7 @@ const (
 	FILE_SERVICE_AWSS3 = "awss3"
 )
 
-func NewFileService(config *config.Config) (FileServiceInterface, error) {
+func NewFileService(config *config.Config) (FileService, error) {
 	switch config.Storage.StorageName {
 	case FILE_SERVICE_AWSS3:
 		return newAWSS3Service(config), nil

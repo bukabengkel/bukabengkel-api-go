@@ -76,7 +76,7 @@ type SyncAsian struct {
 	productDistributorRepo         *repository.ProductDistributorRepository
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository
 	imageRepo                      *repository.ImageRepository
-	fileService                    file_service.FileServiceInterface
+	fileService                    file_service.FileService
 }
 
 func NewSyncAsian(
@@ -84,7 +84,7 @@ func NewSyncAsian(
 	productDistributorRepo *repository.ProductDistributorRepository,
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository,
 	imageRepo *repository.ImageRepository,
-	fileService file_service.FileServiceInterface,
+	fileService file_service.FileService,
 ) *SyncAsian {
 	return &SyncAsian{
 		logger:                         logger,

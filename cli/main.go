@@ -49,7 +49,7 @@ func Register(
 	productDistributorRepo *repository.ProductDistributorRepository,
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository,
 	imageRepo *repository.ImageRepository,
-	fileService file_service.FileServiceInterface,
+	fileService file_service.FileService,
 ) {
 	rootCmd := &cobra.Command{
 		Use:   "",

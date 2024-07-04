@@ -10,15 +10,17 @@ import (
 )
 
 type ReportUsecase interface {
-	Salesreport(ctx context.Context, dto *request.SalesReportDTO) (*struct {
-		TotalSales   float32
-		TotalNett    float32
-		TotalProduct int
-	}, error)
+	Salesreport(ctx context.Context, dto *request.SalesReportDTO) (*salesOrderResult, error)
 }
 
 type reportUsecase struct {
 	orderRepository repository.OrderRepository
+}
+
+type salesOrderResult struct {
+	TotalSales   float32
+	TotalNett    float32
+	TotalProduct int
 }
 
 func NewReportUsecase(
@@ -29,11 +31,7 @@ func NewReportUsecase(
 	}
 }
 
-func (u *reportUsecase) Salesreport(ctx context.Context, dto *request.SalesReportDTO) (result *struct {
-	TotalSales   float32
-	TotalNett    float32
-	TotalProduct int
-}, err error) {
+func (u *reportUsecase) Salesreport(ctx context.Context, dto *request.SalesReportDTO) (result *salesOrderResult, err error) {
 	var startDate, endDate time.Time
 	if dto.StartDate == "" {
 		startDate = time.Now().Add(-7 * 24 * time.Hour)
@@ -59,11 +57,18 @@ func (u *reportUsecase) Salesreport(ctx context.Context, dto *request.SalesRepor
 		return nil, fmt.Errorf("date_range_maximum_is_90_days")
 	}
 
-	summary, _ := u.orderRepository.CountReport(ctx, repository.OrderRepositoryFilter{
+	summary, err := u.orderRepository.CountReport(ctx, repository.OrderRepositoryFilter{
 		StoreID:   &dto.StoreID,
 		StartDate: &startDate,
 		EndDate:   &endDate,
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return summary, nil
+	return &salesOrderResult{
+		TotalSales:   summary.TotalSales,
+		TotalNett:    summary.TotalNett,
+		TotalProduct: summary.TotalProduct,
+	}, nil
 }
