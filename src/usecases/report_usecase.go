@@ -12,7 +12,8 @@ import (
 )
 
 type ReportUsecase interface {
-	Salesreport(ctx context.Context, dto *request.SalesReportDTO) (*salesOrderResult, error)
+	OrderSalesReport(ctx context.Context, dto *request.OrderSalesReportDTO) (*SalesOrderResult, error)
+	ProductSalesReport(ctx context.Context, dto *request.ProductSalesRxeportDTO) (*[]ProductOrderResult, *int, error)
 }
 
 type reportUsecase struct {
@@ -20,16 +21,17 @@ type reportUsecase struct {
 	productRepository repository.ProductRepository
 }
 
-type salesOrderResult struct {
+type SalesOrderResult struct {
 	TotalSales   float32
 	TotalNett    float32
 	TotalProduct int
 }
 
-type productOrderResult struct {
-	TotalSales   float32
-	TotalNett    float32
-	TotalProduct int
+type ProductOrderResult struct {
+	ProductKey  string
+	ProductName string
+	QtySales    int
+	QtyStock    float64
 }
 
 func NewReportUsecase(
@@ -74,13 +76,13 @@ func (u *reportUsecase) dateReportValidator(start string, end string) (startDate
 	return
 }
 
-func (u *reportUsecase) OrderSalesReport(ctx context.Context, dto *request.OrderSalesReportDTO) (result *salesOrderResult, err error) {
+func (u *reportUsecase) OrderSalesReport(ctx context.Context, dto *request.OrderSalesReportDTO) (*SalesOrderResult, error) {
 	startDate, endDate, err := u.dateReportValidator(dto.StartDate, dto.EndDate)
 	if err != nil {
 		return nil, err
 	}
 
-	summary, _ := u.orderRepository.OrderSalesReport(ctx, repository.OrderRepositoryFilter{
+	summary, err := u.orderRepository.OrderSalesReport(ctx, repository.OrderRepositoryFilter{
 		StoreID:   &dto.StoreID,
 		StartDate: startDate,
 		EndDate:   endDate,
@@ -89,32 +91,42 @@ func (u *reportUsecase) OrderSalesReport(ctx context.Context, dto *request.Order
 		return nil, err
 	}
 
-	return &salesOrderResult{
+	return &SalesOrderResult{
 		TotalSales:   summary.TotalSales,
 		TotalNett:    summary.TotalNett,
 		TotalProduct: summary.TotalProduct,
 	}, nil
 }
 
-func (u *reportUsecase) ProductSalesReport(ctx context.Context, dto *request.ProductSalesRxeportDTO) (*[]productOrderResult, error) {
+func (u *reportUsecase) ProductSalesReport(ctx context.Context, dto *request.ProductSalesRxeportDTO) (*[]ProductOrderResult, *int, error) {
 	startDate, endDate, err := u.dateReportValidator(dto.StartDate, dto.EndDate)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	page, perPage, err := utils.ParsePageAndPerPage(dto.Page, dto.PerPage)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	summary, _ := u.productRepository.ProductSalesReport(ctx, page, perPage, repository.ProductRepositoryFilter{
+	summary, count, err := u.productRepository.ProductSalesReport(ctx, page, perPage, repository.ProductRepositoryFilter{
 		StoreID:   &dto.StoreID,
 		StartDate: startDate,
 		EndDate:   endDate,
 	})
+	if err != nil {
+		return nil, nil, err
+	}
 
-	fmt.Println(startDate, endDate)
-	fmt.Println(summary)
+	var productOrderResults []ProductOrderResult
+	for _, sum := range *summary {
+		productOrderResults = append(productOrderResults, ProductOrderResult{
+			ProductKey:  sum.ProductKey,
+			ProductName: sum.ProductName,
+			QtySales:    sum.QtySales,
+			QtyStock:    sum.QtyStock,
+		})
+	}
 
-	return nil, nil
+	return &productOrderResults, count, nil
 }

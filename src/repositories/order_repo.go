@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/peang/bukabengkel-api-go/src/services/cache_services"
+	"github.com/peang/bukabengkel-api-go/src/utils"
 	"github.com/uptrace/bun"
 )
 
@@ -26,6 +27,13 @@ type salesOrderResult struct {
 	TotalSales   float32
 	TotalNett    float32
 	TotalProduct int
+}
+
+type productOrderResult struct {
+	ProductKey  string
+	ProductName string
+	QtySales    int
+	QtyStock    float64
 }
 
 func NewOrderRepository(
@@ -50,26 +58,17 @@ func (r *OrderRepository) queryBuilder(query *bun.SelectQuery, cond OrderReposit
 	return query
 }
 
-func (r *OrderRepository) CountReport(ctx context.Context, filter OrderRepositoryFilter) (*salesOrderResult, error) {
-	cacheKey := generateHashKey(filter)
-	fmt.Println(cacheKey)
-	cache, err := r.cacheService.Get(ctx, cacheKey)
-	if err == nil {
-		return nil, err
-	}
-	if cache != nil {
-		return cache.(*salesOrderResult), nil
-	}
-
+func (r *OrderRepository) OrderSalesReport(ctx context.Context, filter OrderRepositoryFilter) (*salesOrderResult, error) {
 	var report struct {
 		TotalSales   float32
 		TotalNett    float32
 		TotalProduct int
 	}
+
 	sl := r.db.NewSelect().Table("order").Join(`LEFT JOIN order_item as oi ON "oi".id = "order".id`)
 	sl = r.queryBuilder(sl, filter)
 
-	err = sl.ColumnExpr(`SUM("order".total) as total_sales, SUM("order".total_nett) as total_nett, count("oi".id) as total_product`).
+	err := sl.ColumnExpr(`SUM("order".total) as total_sales, SUM("order".total_nett) as total_nett, count("oi".id) as total_product`).
 		Scan(ctx, &report)
 	if err != nil {
 		return nil, err
@@ -89,7 +88,29 @@ func (r *OrderRepository) CountReport(ctx context.Context, filter OrderRepositor
 	return &result, nil
 }
 
-func generateHashKey(filter OrderRepositoryFilter) string {
+func (r *ProductRepository) ProductSalesReport(ctx context.Context, page int, perPage int, filter ProductRepositoryFilter) (*[]productOrderResult, *int, error) {
+	offset, limit := utils.GenerateOffsetLimit(page, perPage)
+
+	var results []productOrderResult
+
+	sl := r.db.NewSelect().Table(`order`).
+		Join(`INNER JOIN "order_item" ON order_item.id = "order".id`).
+		Join(`INNER JOIN "product" ON order_item.product_key_id::uuid = product.key`)
+
+	sl = r.queryBuilder(sl, filter)
+
+	count, err := sl.ColumnExpr(`product.key as product_key, product.name as product_name, order_item.qty as qty_sales, product.stock as qty_stock`).
+		Limit(limit).Offset(offset).
+		ScanAndCount(ctx, &results)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &results, &count, nil
+}
+
+func GenerateHashKey(filter OrderRepositoryFilter) string {
 	id := fmt.Sprint("report_sales_", filter.StoreID, "_", filter.StartDate, "_", filter.EndDate)
 
 	hash := md5.New()

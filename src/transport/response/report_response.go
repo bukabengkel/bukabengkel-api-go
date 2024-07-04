@@ -1,6 +1,8 @@
 package response
 
-import "github.com/peang/bukabengkel-api-go/src/models"
+import (
+	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
+)
 
 type orderSalesReportResponse struct {
 	TotalSales   float32 `json:"total_sales"`
@@ -9,19 +11,29 @@ type orderSalesReportResponse struct {
 }
 
 type productSalesReportResponse struct {
-	ProductName     string `json:"product_name"`
-	QtySales        int    `json:"qty_sales"`
-	QtyCurrentStock int    `json:"qty_current_stock"`
+	ProductKey      string  `json:"product_key"`
+	ProductName     string  `json:"product_name"`
+	QtySales        int     `json:"qty_sales"`
+	QtyCurrentStock float64 `json:"qty_current_stock"`
 }
 
-func OrderSalesReportResponse(totalSales float32, totalNett float32, totalProduct int) *orderSalesReportResponse {
+func OrderSalesReportResponse(reports *usecase.SalesOrderResult) *orderSalesReportResponse {
 	return &orderSalesReportResponse{
-		TotalSales:   totalSales,
-		TotalNett:    totalNett,
-		TotalProduct: totalProduct,
+		TotalSales:   reports.TotalSales,
+		TotalNett:    reports.TotalNett,
+		TotalProduct: reports.TotalProduct,
 	}
 }
 
-func ProductSalesReportResponse(*[]models.Product) *[]productSalesReportResponse {
-	return nil
+func ProductSalesReportResponse(reports *[]usecase.ProductOrderResult) *[]productSalesReportResponse {
+	var result []productSalesReportResponse
+	for _, item := range *reports {
+		result = append(result, productSalesReportResponse{
+			ProductKey:      item.ProductKey,
+			ProductName:     item.ProductName,
+			QtySales:        item.QtySales,
+			QtyCurrentStock: item.QtyStock,
+		})
+	}
+	return &result
 }

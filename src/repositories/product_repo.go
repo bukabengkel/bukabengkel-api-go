@@ -102,25 +102,3 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 
 	return &entityProducts, count, nil
 }
-
-func (r *ProductRepository) ProductSalesReport(ctx context.Context, page int, perPage int, filter ProductRepositoryFilter) (*[]struct {
-	ProductName string
-	QtySales    float32
-	QtyStock    int
-}, error) {
-	var report struct {
-		ProductName  float32
-		TotalNett    float32
-		TotalProduct int
-	}
-	sl := r.db.NewSelect().Table("product").Join(`LEFT JOIN order_item as oi ON "oi".id = "order".id`)
-	sl = r.queryBuilder(sl, filter)
-
-	err := sl.ColumnExpr(`SUM("order".total) as total_sales, SUM("order".total_nett) as total_nett, count("oi".id) as total_product`).
-		Scan(ctx, &report)
-	if err != nil {
-		return nil, err
-	}
-
-	return nil, nil
-}

@@ -54,7 +54,7 @@ func (h *ReportHandler) OrderSalesReport(ctx echo.Context) (err error) {
 		ctx,
 		http.StatusOK,
 		"Order Sales Report",
-		response.OrderSalesReportResponse(salesReport.TotalSales, salesReport.TotalNett, salesReport.TotalProduct),
+		response.OrderSalesReportResponse(salesReport),
 		nil,
 	)
 }
@@ -78,7 +78,7 @@ func (h *ReportHandler) ProductSalesReport(ctx echo.Context) (err error) {
 		PerPage:   perPage,
 	}
 
-	productReport, err := h.usecase.ProductSalesReport(ctx.Request().Context(), &dto)
+	productReport, count, err := h.usecase.ProductSalesReport(ctx.Request().Context(), &dto)
 	if err != nil {
 		return ctx.JSON(utils.ParseHttpError(err))
 	}
@@ -87,7 +87,7 @@ func (h *ReportHandler) ProductSalesReport(ctx echo.Context) (err error) {
 		ctx,
 		http.StatusOK,
 		"Product Sales Report",
-		productReport,
-		nil,
+		response.ProductSalesReportResponse(productReport),
+		utils.BuildMeta(dto.Page, dto.PerPage, *count),
 	)
 }

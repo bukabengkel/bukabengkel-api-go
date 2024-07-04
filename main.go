@@ -56,7 +56,7 @@ func main() {
 	orderRepo := repository.NewOrderRepository(db, cacheService)
 
 	// Usecases
-	reportUsecase := usecase.NewReportUsecase(orderRepo)
+	reportUsecase := usecase.NewReportUsecase(orderRepo, productRepo)
 	productUsecase := usecase.NewProductUsecase(productRepo)
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo)
 	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
