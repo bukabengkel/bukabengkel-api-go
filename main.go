@@ -38,14 +38,15 @@ func main() {
 
 	// services
 	jwtService := config.NewJWTService(configApp.JWTSecretKey, configApp.BaseURL)
-	s3service := file_service.NewAWSS3Service(configApp)
+	fileService, err := file_service.NewFileService(configApp)
+	utils.PanicIfNeeded(err)
 
 	middleware := middleware.NewMiddleware(enfocer, appLogger, jwtService)
 
 	// Repositories
-	imageRepo := repository.NewImageRepository(db, s3service)
+	imageRepo := repository.NewImageRepository(db, fileService)
 	productRepo := repository.NewProductRepository(db, imageRepo)
-	productDistRepo := repository.NewProductDistributorRepository(db, s3service)
+	productDistRepo := repository.NewProductDistributorRepository(db, fileService)
 	productCatDistRepo := repository.NewProductCategoryDistributorRepository(db)
 	productExportLogRepo := repository.NewProductExportLogRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
@@ -70,7 +71,7 @@ func main() {
 	c := cron.New()
 	_, err = c.AddFunc("0 0 * * *", func() {
 		fmt.Println("Executing Sync Asian Products")
-		asian := cmd.NewSyncAsian(appLogger, productDistRepo, productCatDistRepo, imageRepo, s3service)
+		asian := cmd.NewSyncAsian(appLogger, productDistRepo, productCatDistRepo, imageRepo, fileService)
 
 		asian.Execute()
 	})

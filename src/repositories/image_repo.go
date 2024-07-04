@@ -10,8 +10,8 @@ import (
 )
 
 type ImageRepository struct {
-	db        *bun.DB
-	s3service *file_service.S3Service
+	db          *bun.DB
+	fileService file_service.FileServiceInterface
 }
 
 type ImageRepositoryFilter struct {
@@ -20,10 +20,10 @@ type ImageRepositoryFilter struct {
 	EntityType *uint
 }
 
-func NewImageRepository(db *bun.DB, s3service *file_service.S3Service) *ImageRepository {
+func NewImageRepository(db *bun.DB, fileService file_service.FileServiceInterface) *ImageRepository {
 	return &ImageRepository{
-		db:        db,
-		s3service: s3service,
+		db:          db,
+		fileService: fileService,
 	}
 }
 

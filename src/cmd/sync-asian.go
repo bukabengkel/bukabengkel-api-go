@@ -76,7 +76,7 @@ type SyncAsian struct {
 	productDistributorRepo         *repository.ProductDistributorRepository
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository
 	imageRepo                      *repository.ImageRepository
-	s3service                      *file_service.S3Service
+	fileService                    file_service.FileServiceInterface
 }
 
 func NewSyncAsian(
@@ -84,14 +84,14 @@ func NewSyncAsian(
 	productDistributorRepo *repository.ProductDistributorRepository,
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository,
 	imageRepo *repository.ImageRepository,
-	s3service *file_service.S3Service,
+	fileService file_service.FileServiceInterface,
 ) *SyncAsian {
 	return &SyncAsian{
 		logger:                         logger,
 		productDistributorRepo:         productDistributorRepo,
 		productCategoryDistributorRepo: productCategoryDistributorRepo,
 		imageRepo:                      imageRepo,
-		s3service:                      s3service,
+		fileService:                    fileService,
 	}
 }
 
@@ -336,9 +336,9 @@ func (s *SyncAsian) syncProduct(
 
 			weight, _ := strconv.ParseFloat(product.Weight, 64)
 			volume, _ := strconv.ParseFloat(product.Volume, 64)
-			var img file_service.S3UploadResponse
+			var img file_service.FileUploadResponse
 			if product.Images != "" {
-				imgPtr, err := s.s3service.Upload(models.ImageProductDistributor, product.Images)
+				imgPtr, err := s.fileService.Upload(models.ImageProductDistributor, product.Images)
 				if err != nil {
 					newErr := fmt.Errorf("error_uploading_image;%s;%v", product.Name, err.Error())
 					chErr <- newErr
@@ -448,7 +448,7 @@ func (s *SyncAsian) remove() {
 
 		for _, product := range *products {
 			if len(product.Images) > 0 {
-				s.s3service.Delete(product.Images[0])
+				s.fileService.Delete(product.Images[0])
 			}
 			s.productDistributorRepo.Delete(&product)
 		}

@@ -33,14 +33,15 @@ func main() {
 	defer db.Close()
 
 	// services
-	s3service := file_service.NewAWSS3Service(configApp)
+	fileService, err := file_service.NewFileService(configApp)
+	utils.PanicIfNeeded(err)
 
 	// Repositories
-	imageRepo := repository.NewImageRepository(db, s3service)
-	productDistributorRepo := repository.NewProductDistributorRepository(db, s3service)
+	imageRepo := repository.NewImageRepository(db, fileService)
+	productDistributorRepo := repository.NewProductDistributorRepository(db, fileService)
 	productCategoryDistributorRepo := repository.NewProductCategoryDistributorRepository(db)
 
-	Register(appLogger, productDistributorRepo, productCategoryDistributorRepo, imageRepo, s3service)
+	Register(appLogger, productDistributorRepo, productCategoryDistributorRepo, imageRepo, fileService)
 }
 
 func Register(
@@ -48,7 +49,7 @@ func Register(
 	productDistributorRepo *repository.ProductDistributorRepository,
 	productCategoryDistributorRepo *repository.ProductCategoryDistributorRepository,
 	imageRepo *repository.ImageRepository,
-	s3service *file_service.S3Service,
+	fileService file_service.FileServiceInterface,
 ) {
 	rootCmd := &cobra.Command{
 		Use:   "",
@@ -58,7 +59,7 @@ func Register(
 		},
 	}
 
-	asian := cmd.NewSyncAsian(logger, productDistributorRepo, productCategoryDistributorRepo, imageRepo, s3service)
+	asian := cmd.NewSyncAsian(logger, productDistributorRepo, productCategoryDistributorRepo, imageRepo, fileService)
 
 	syncAsianCmd := &cobra.Command{
 		Use:   "sync-asian",

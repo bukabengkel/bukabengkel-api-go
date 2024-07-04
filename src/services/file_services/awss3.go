@@ -25,16 +25,7 @@ type S3Service struct {
 	BaseURL     string
 }
 
-type S3UploadResponse struct {
-	Filename  string
-	Size      int64
-	Extension string
-	Etag      string
-	Bucket    string
-	Key       string
-}
-
-func NewAWSS3Service(config *config.Config) *S3Service {
+func newAWSS3Service(config *config.Config) FileServiceInterface {
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region:      aws.String("ap-southeast-1"),
 		Credentials: credentials.NewStaticCredentials(config.Storage.AccessKey, config.Storage.SecretKey, ""),
@@ -64,7 +55,7 @@ func (s *S3Service) BuildUrl(path string, width int, height int) string {
 	return fmt.Sprintf("%s/%s", s.BaseURL, path)
 }
 
-func (s *S3Service) Upload(category string, fileUrl string) (*S3UploadResponse, error) {
+func (s *S3Service) Upload(category string, fileUrl string) (*FileUploadResponse, error) {
 	resp, err := http.Get(fileUrl)
 	if err != nil {
 		return nil, err
@@ -106,7 +97,7 @@ func (s *S3Service) Upload(category string, fileUrl string) (*S3UploadResponse, 
 		return nil, err
 	}
 
-	return &S3UploadResponse{
+	return &FileUploadResponse{
 		Filename:  fileName,
 		Size:      fileSize,
 		Extension: fileMime,
