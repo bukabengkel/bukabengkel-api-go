@@ -18,8 +18,8 @@ type ProductRepository struct {
 
 type ProductRepositoryFilter struct {
 	Name          *string
-	CategoryId    *string
-	StoreID       *uint
+	CategoryId    *uint64
+	StoreID       *uint64
 	StockMoreThan *uint
 	StartDate     *time.Time
 	EndDate       *time.Time

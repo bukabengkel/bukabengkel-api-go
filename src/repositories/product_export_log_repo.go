@@ -61,3 +61,17 @@ func (r *ProductExportLogRepository) List(ctx context.Context, page int, perPage
 
 	return &entityProductExportLogs, count, nil
 }
+
+func (r *ProductExportLogRepository) Save(log *models.ProductExportLog) error {
+	_, err := r.db.NewInsert().Model(log).Returning("id").Exec(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	err = r.db.NewSelect().Model(log).WherePK().Scan(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
