@@ -94,7 +94,7 @@ func (r *OrderRepository) ProductSalesReport(ctx context.Context, page int, perP
 	var results []productOrderResult
 
 	sl := r.db.NewSelect().Table(`order`).
-		Join(`INNER JOIN "order_item" ON order_item.id = "order".id`).
+		Join(`INNER JOIN "order_item" ON order_item.order_id = "order".id`).
 		Join(`INNER JOIN "product" ON order_item.product_key_id::uuid = product.key`)
 
 	sl = r.queryBuilder(sl, filter)
