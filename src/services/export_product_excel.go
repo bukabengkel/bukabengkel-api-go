@@ -6,6 +6,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/peang/bukabengkel-api-go/src/models"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
 	"github.com/xuri/excelize/v2"
@@ -18,6 +19,7 @@ func ExportProduct(
 	storeId uint64,
 	categoryId *uint64,
 ) {
+	filename := uuid.New().String()
 	ch := make(chan models.Product, 10)
 	wg := sync.WaitGroup{}
 
@@ -104,7 +106,7 @@ func ExportProduct(
 
 	wg.Wait()
 
-	if err := excelFile.SaveAs("test.xlsx"); err != nil {
+	if err := excelFile.SaveAs(fmt.Sprintf("tmp/%s.xlsx", filename)); err != nil {
 		log.Fatalf("Failed to save file: %v", err)
 	}
 }
@@ -114,28 +116,45 @@ func toExcel(wg *sync.WaitGroup, ch <-chan models.Product, exc *excelize.File, s
 
 	cellNumber := 2
 	for product := range ch {
-		fmt.Println(product.Name)
-
-		// Set values in the sheet
 		exc.SetCellValue(sheetName, fmt.Sprintf("A%d", cellNumber), product.Key)
 		exc.SetCellValue(sheetName, fmt.Sprintf("B%d", cellNumber), product.Name)
+
 		if product.Brand != nil {
 			exc.SetCellValue(sheetName, fmt.Sprintf("C%d", cellNumber), product.Brand.Name)
 		}
+
 		exc.SetCellValue(sheetName, fmt.Sprintf("D%d", cellNumber), product.Category.Name)
 		exc.SetCellValue(sheetName, fmt.Sprintf("E%d", cellNumber), product.Unit)
 		exc.SetCellValue(sheetName, fmt.Sprintf("F%d", cellNumber), product.Description)
 		exc.SetCellValue(sheetName, fmt.Sprintf("G%d", cellNumber), product.Price)
 		exc.SetCellValue(sheetName, fmt.Sprintf("H%d", cellNumber), product.SellPrice)
-		// f.SetCellValue(sheetName, "A1", "Name")
-		// f.SetCellValue(sheetName, "B1", "Age")
-		// f.SetCellValue(sheetName, "A2", "John Doe")
-		// f.SetCellValue(sheetName, "B2", 29)
-		// f.SetCellValue(sheetName, "A3", "Jane Smith")
-		// f.SetCellValue(sheetName, "B3", 34)
+		exc.SetCellValue(sheetName, fmt.Sprintf("I%d", cellNumber), product.IsStockUnlimited)
+		exc.SetCellValue(sheetName, fmt.Sprintf("J%d", cellNumber), product.Stock)
+		exc.SetCellValue(sheetName, fmt.Sprintf("K%d", cellNumber), product.StockMinimum)
+		exc.SetCellValue(sheetName, fmt.Sprintf("L%d", cellNumber), product.Status.String())
+
+		if len(product.Images) > 1 && product.Images[0].Path != "" {
+			exc.SetCellValue(sheetName, fmt.Sprintf("M%d", cellNumber), product.Images[0].Path)
+		}
+
+		if len(product.Images) > 2 && product.Images[1].Path != "" {
+			exc.SetCellValue(sheetName, fmt.Sprintf("M%d", cellNumber), product.Images[1].Path)
+		}
+
+		if len(product.Images) > 3 && product.Images[2].Path != "" {
+			exc.SetCellValue(sheetName, fmt.Sprintf("M%d", cellNumber), product.Images[2].Path)
+		}
+
+		if len(product.Images) > 4 && product.Images[3].Path != "" {
+			exc.SetCellValue(sheetName, fmt.Sprintf("M%d", cellNumber), product.Images[3].Path)
+		}
+
+		if len(product.Images) > 5 && product.Images[4].Path != "" {
+			exc.SetCellValue(sheetName, fmt.Sprintf("M%d", cellNumber), product.Images[4].Path)
+		}
 
 		// // Set the active sheet
-		// f.SetActiveSheet(index)
+		// exc.SetActiveSheet(index)
 		cellNumber++
 	}
 }
