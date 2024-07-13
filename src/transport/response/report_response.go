@@ -26,7 +26,8 @@ func OrderSalesReportResponse(reports *usecase.SalesOrderResult) *orderSalesRepo
 }
 
 func ProductSalesReportResponse(reports *[]usecase.ProductOrderResult) *[]productSalesReportResponse {
-	var result []productSalesReportResponse
+	result := []productSalesReportResponse{}
+
 	for _, item := range *reports {
 		result = append(result, productSalesReportResponse{
 			ProductKey:      item.ProductKey,
@@ -35,5 +36,6 @@ func ProductSalesReportResponse(reports *[]usecase.ProductOrderResult) *[]produc
 			QtyCurrentStock: item.QtyStock,
 		})
 	}
+
 	return &result
 }
