@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/gotidy/ptr"
 	"github.com/peang/bukabengkel-api-go/src/models"
@@ -20,6 +21,8 @@ type ProductRepositoryFilter struct {
 	CategoryId    *string
 	StoreID       *uint
 	StockMoreThan *uint
+	StartDate     *time.Time
+	EndDate       *time.Time
 }
 
 func NewProductRepository(db *bun.DB, imageRepository *ImageRepository) *ProductRepository {
@@ -87,7 +90,7 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 			var productImages []models.Image
 			for _, img := range images {
 				if img.EntityID == p.ID {
-					img.Path = r.imageRepository.s3service.BuildUrl(img.Path, 500, 500)
+					img.Path = r.imageRepository.fileService.BuildUrl(img.Path, 500, 500)
 					productImages = append(productImages, img)
 				}
 			}

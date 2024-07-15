@@ -55,8 +55,4 @@ test:
 	seed-create
 	seed-up
 	seed-down
-	run-dev
-	run
 	build
-	test
-

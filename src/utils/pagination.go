@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strconv"
 )
 
 func GenerateSort(str string) string {
@@ -27,4 +28,25 @@ func GenerateOffsetLimit(page, perPage int) (offset, limit int) {
 	limit = perPage
 
 	return offset, limit
+}
+
+func ParsePageAndPerPage(pageString string, perPageString string) (page int, perPage int, err error) {
+	if pageString == "" || pageString == "0" {
+		page = 1
+	} else {
+		page, err = strconv.Atoi(pageString)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+
+	if perPageString == "" || perPageString == "0" {
+		perPage = 10
+	} else {
+		perPage, err = strconv.Atoi(perPageString)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+	return
 }

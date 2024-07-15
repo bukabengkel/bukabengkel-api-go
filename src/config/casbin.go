@@ -7,7 +7,6 @@ import (
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
 	fileadapter "github.com/casbin/casbin/v2/persist/file-adapter"
-	"github.com/davecgh/go-spew/spew"
 )
 
 // NewCasbinEnfocer will create new casbin enfocer instance
@@ -38,6 +37,5 @@ func NewCasbinEnfocer(config *Config) (enfocer *casbin.Enforcer, err error) {
 		return nil, err
 	}
 
-	spew.Dump("err")
 	return e, nil
 }

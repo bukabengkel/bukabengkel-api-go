@@ -14,6 +14,7 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/handlers"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
+	cache_service "github.com/peang/bukabengkel-api-go/src/services/cache_services"
 	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
@@ -38,18 +39,24 @@ func main() {
 
 	// services
 	jwtService := config.NewJWTService(configApp.JWTSecretKey, configApp.BaseURL)
-	s3service := file_service.NewAWSS3Service(configApp)
+	fileService, err := file_service.NewFileService(configApp)
+	utils.PanicIfNeeded(err)
+
+	cacheService, err := cache_service.NewCacheService(configApp)
+	utils.PanicIfNeeded(err)
 
 	middleware := middleware.NewMiddleware(enfocer, appLogger, jwtService)
 
 	// Repositories
-	imageRepo := repository.NewImageRepository(db, s3service)
+	imageRepo := repository.NewImageRepository(db, fileService)
 	productRepo := repository.NewProductRepository(db, imageRepo)
-	productDistRepo := repository.NewProductDistributorRepository(db, s3service)
+	productDistRepo := repository.NewProductDistributorRepository(db, fileService)
 	productCatDistRepo := repository.NewProductCategoryDistributorRepository(db)
 	productExportLogRepo := repository.NewProductExportLogRepository(db)
+	orderRepo := repository.NewOrderRepository(db, cacheService)
 
 	// Usecases
+	reportUsecase := usecase.NewReportUsecase(orderRepo)
 	productUsecase := usecase.NewProductUsecase(productRepo)
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo)
 	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
@@ -57,6 +64,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.CORSMiddleware())
 
+	handlers.NewReportHandler(e, middleware, reportUsecase)
 	handlers.NewProductHandler(e, middleware, productUsecase)
 	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
 	handlers.NewProductExportLogHandler(e, middleware, productExportLogUsecase)
@@ -67,7 +75,7 @@ func main() {
 	c := cron.New()
 	_, err = c.AddFunc("0 0 * * *", func() {
 		fmt.Println("Executing Sync Asian Products")
-		asian := cmd.NewSyncAsian(appLogger, productDistRepo, productCatDistRepo, imageRepo, s3service)
+		asian := cmd.NewSyncAsian(appLogger, productDistRepo, productCatDistRepo, imageRepo, fileService)
 
 		asian.Execute()
 	})
