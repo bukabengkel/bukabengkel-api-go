@@ -34,6 +34,7 @@ type productOrderResult struct {
 	ProductName string
 	QtySales    int
 	QtyStock    float64
+	OrderDate   string
 }
 
 func NewOrderRepository(
@@ -99,9 +100,9 @@ func (r *OrderRepository) ProductSalesReport(ctx context.Context, page int, perP
 
 	sl = r.queryBuilder(sl, filter)
 
-	count, err := sl.ColumnExpr(`product.key as product_key, product.name as product_name, SUM(order_item.qty) as qty_sales, product.stock as qty_stock`).
-		GroupExpr(`product.key, product.name, product.stock, "order".order_date`).
-		OrderExpr(`"order".order_date DESC`).
+	count, err := sl.ColumnExpr(`product.key as product_key, product.name as product_name, SUM(order_item.qty) as qty_sales, product.stock as qty_stock, MAX("order".order_date) AS order_date`).
+		GroupExpr(`product.key, product.name, product.stock`).
+		OrderExpr(`order_date DESC`).
 		Limit(limit).
 		Offset(offset).
 		ScanAndCount(ctx, &results)
