@@ -1,5 +1,5 @@
 .env
 bin/
-src/cmd/logs/*.**
+src/cmd/logs/*.txt
 vendor/
 tmp/
