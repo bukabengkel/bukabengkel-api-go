@@ -16,13 +16,16 @@ type ProductDistributorUsecase interface {
 
 type productDistributorUsecase struct {
 	productDistributorRepository repository.ProductDistributorRepository
+	distributorRepository        repository.DistributorRepository
 }
 
 func NewProductDistributorUsecase(
 	productDistributorRepository *repository.ProductDistributorRepository,
+	distributorRepository *repository.DistributorRepository,
 ) *productDistributorUsecase {
 	return &productDistributorUsecase{
 		productDistributorRepository: *productDistributorRepository,
+		distributorRepository:        *distributorRepository,
 	}
 }
 
@@ -39,9 +42,18 @@ func (u *productDistributorUsecase) List(ctx context.Context, dto request.Produc
 		perPage = 10
 	}
 
+	if dto.DistributorID != "" {
+		distributor, _ := u.distributorRepository.FindOne(repository.DistributorRepositoryFilter{
+			Key: &dto.DistributorID,
+		})
+
+		if distributor != nil {
+			filter.DistributorID = &distributor.ID
+		}
+	}
+
 	if dto.Keyword != "" && len(dto.Keyword) >= 3 {
 		filter.Name = utils.String(dto.Keyword)
-
 	}
 
 	sort := "-id"

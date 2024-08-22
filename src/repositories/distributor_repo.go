@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/peang/bukabengkel-api-go/src/models"
@@ -14,6 +15,8 @@ type DistributorRepository struct {
 }
 
 type DistributorRepositoryFilter struct {
+	ID   *uint64
+	Key  *string
 	Name *string
 }
 
@@ -28,6 +31,14 @@ func NewDistributorRepository(db *bun.DB) *DistributorRepository {
 }
 
 func (r *DistributorRepository) queryBuilder(query *bun.SelectQuery, filter DistributorRepositoryFilter) *bun.SelectQuery {
+	if filter.ID != nil {
+		query.Where("? = ?", bun.Ident("distributor.id"), *filter.ID)
+	}
+
+	if filter.Key != nil {
+		query.Where("? = ?", bun.Ident("distributor.key"), *filter.Key)
+	}
+
 	if filter.Name != nil {
 		query.Where("? ILIKE ?", bun.Ident("distributor.name"), fmt.Sprintf("%%%s%%", *filter.Name))
 	}
@@ -57,4 +68,22 @@ func (r *DistributorRepository) List(ctx context.Context, page int, perPage int,
 	}
 
 	return &distributors, count, nil
+}
+
+func (r *DistributorRepository) FindOne(filter DistributorRepositoryFilter) (*models.Distributor, error) {
+	var distributor models.Distributor
+
+	sl := r.db.NewSelect().Model(&distributor)
+	sl = r.queryBuilder(sl, filter)
+
+	err := sl.Scan(context.TODO())
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
+	return &distributor, nil
 }

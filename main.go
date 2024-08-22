@@ -59,7 +59,7 @@ func main() {
 	// Usecases
 	reportUsecase := usecase.NewReportUsecase(orderRepo)
 	productUsecase := usecase.NewProductUsecase(productRepo)
-	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo)
+	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo, distributorRepo)
 	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
 	distributorUsecase := usecase.NewDistributorUsecase(distributorRepo)
 
