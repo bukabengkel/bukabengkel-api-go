@@ -9,6 +9,7 @@ import (
 type ProductDistributorResponse struct {
 	ID            string                    `json:"id"`
 	Name          string                    `json:"name"`
+	Description   string                    `json:"description"`
 	Distributor   string                    `json:"distributor"`
 	DistributorID string                    `json:"distributor_id"`
 	Code          string                    `json:"code"`
@@ -17,6 +18,8 @@ type ProductDistributorResponse struct {
 	Thumbnail     string                    `json:"thumbnail"`
 	Price         float64                   `json:"price"`
 	BulkPrice     []models.ProductBulkPrice `json:"bulk_price"`
+	Weight        float64                   `json:"weight"`
+	Volume        float64                   `json:"volume"`
 	Stock         float64                   `json:"stock"`
 	UpdatedAt     time.Time                 `json:"updated_at"`
 }
@@ -25,6 +28,7 @@ func ProductDistributorDetailResponse(product *models.ProductDistributor) *Produ
 	response := &ProductDistributorResponse{
 		ID:            product.Key,
 		Name:          product.Name,
+		Description:   product.Description,
 		Distributor:   product.Distributor.Name,
 		DistributorID: product.Distributor.Key,
 		Code:          product.Code,
@@ -33,6 +37,8 @@ func ProductDistributorDetailResponse(product *models.ProductDistributor) *Produ
 		Thumbnail:     product.Thumbnail,
 		Price:         product.Price,
 		BulkPrice:     product.BulkPrice,
+		Weight:        product.Weight,
+		Volume:        product.Volume,
 		Stock:         product.Stock,
 		UpdatedAt:     product.UpdatedAt,
 	}
@@ -43,7 +49,18 @@ func ProductDistributorDetailResponse(product *models.ProductDistributor) *Produ
 func ProductDistributorListResponse(products *[]models.ProductDistributor) []ProductDistributorResponse {
 	var responses = make([]ProductDistributorResponse, 0)
 	for _, product := range *products {
-		response := ProductDistributorDetailResponse(&product)
+		response := &ProductDistributorResponse{
+			ID:            product.Key,
+			Name:          product.Name,
+			Distributor:   product.Distributor.Name,
+			DistributorID: product.Distributor.Key,
+			Code:          product.Code,
+			Category:      product.Category.Name,
+			Unit:          product.Unit,
+			Thumbnail:     product.Thumbnail,
+			Price:         product.Price,
+			UpdatedAt:     product.UpdatedAt,
+		}
 		responses = append(responses, *response)
 	}
 	return responses

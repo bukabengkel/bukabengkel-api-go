@@ -26,7 +26,7 @@ func NewProductDistributorHandler(
 
 	apiV1 := e.Group("/v1/product-distributors")
 	apiV1.GET("", handler.List, middleware.RBAC())
-	apiV1.GET("/:id", handler.Detail, middleware.RBAC())
+	apiV1.GET("/:key", handler.Detail, middleware.RBAC())
 }
 
 func (h *ProductDistributorHandler) List(ctx echo.Context) (err error) {
@@ -56,7 +56,7 @@ func (h *ProductDistributorHandler) List(ctx echo.Context) (err error) {
 
 func (h *ProductDistributorHandler) Detail(ctx echo.Context) (err error) {
 	dto := request.ProductDistributorDetailDTO{
-		ID: ctx.Param("id"),
+		ID: ctx.Param("key"),
 	}
 
 	product, err := h.usecase.Detail(ctx.Request().Context(), dto)
