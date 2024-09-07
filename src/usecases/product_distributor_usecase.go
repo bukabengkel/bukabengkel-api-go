@@ -12,6 +12,7 @@ import (
 
 type ProductDistributorUsecase interface {
 	List(ctx context.Context, dto request.ProductDistributorListDTO) (*[]models.ProductDistributor, int, error)
+	Detail(ctx context.Context, dto request.ProductDistributorDetailDTO) (*models.ProductDistributor, error)
 }
 
 type productDistributorUsecase struct {
@@ -67,4 +68,17 @@ func (u *productDistributorUsecase) List(ctx context.Context, dto request.Produc
 	}
 
 	return products, count, nil
+}
+
+func (u *productDistributorUsecase) Detail(ctx context.Context, dto request.ProductDistributorDetailDTO) (*models.ProductDistributor, error) {
+	filter := repository.ProductDistributorRepositoryFilter{
+		ID: &dto.ID,
+	}
+
+	product, err := u.productDistributorRepository.FindOne(filter)
+	if err != nil {
+		err = utils.NewInternalServerError(err)
+	}
+
+	return product, nil
 }

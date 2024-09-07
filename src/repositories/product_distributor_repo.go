@@ -17,6 +17,7 @@ type ProductDistributorRepository struct {
 }
 
 type ProductDistributorRepositoryFilter struct {
+	ID            *string
 	DistributorID *uint64
 	Name          *string
 	Code          *string
@@ -35,6 +36,10 @@ func NewProductDistributorRepository(db *bun.DB, fileService file_service.FileSe
 }
 
 func (r *ProductDistributorRepository) queryBuilder(query *bun.SelectQuery, filter ProductDistributorRepositoryFilter) *bun.SelectQuery {
+	if filter.ID != nil {
+		query.Where("? = ?", bun.Ident("product_distributor.key"), filter.ID)
+	}
+
 	if filter.DistributorID != nil {
 		query.Where("? = ?", bun.Ident("product_distributor.distributor_id"), filter.DistributorID)
 	}
@@ -163,7 +168,9 @@ func (r *ProductDistributorRepository) UpdateWithCondition(filter ProductDistrib
 func (r *ProductDistributorRepository) FindOne(filter ProductDistributorRepositoryFilter) (*models.ProductDistributor, error) {
 	var product models.ProductDistributor
 
-	sl := r.db.NewSelect().Model(&product)
+	sl := r.db.NewSelect().Model(&product).
+		Relation("Distributor").
+		Relation("Category")
 	sl = r.queryBuilder(sl, filter)
 
 	err := sl.Scan(context.TODO())
