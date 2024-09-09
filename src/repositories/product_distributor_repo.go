@@ -182,6 +182,7 @@ func (r *ProductDistributorRepository) FindOne(filter ProductDistributorReposito
 		}
 	}
 
+	product.Thumbnail = r.fileService.BuildUrl(product.Thumbnail, 200, 200)
 	return &product, nil
 }
 
