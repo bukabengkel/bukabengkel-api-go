@@ -29,8 +29,6 @@ func ProductDetailResponse(product *models.Product) *productDetailResponse {
 	response := &productDetailResponse{
 		ID:               product.Key,
 		Store:            product.Store.Name,
-		CategoryID:       product.CategoryID,
-		CategoryName:     product.Category.Name,
 		Name:             product.Name,
 		Slug:             product.Slug,
 		Description:      product.Description,
@@ -51,6 +49,14 @@ func ProductDetailResponse(product *models.Product) *productDetailResponse {
 	} else {
 		response.BrandID = product.Brand.ID
 		response.BrandName = &product.Brand.Name
+	}
+
+	if product.Category == nil {
+		response.CategoryID = uint64(0)
+		response.CategoryName = ""
+	} else {
+		response.CategoryID = product.CategoryID
+		response.CategoryName = product.Category.Name
 	}
 
 	if len(product.Images) > 0 {
