@@ -34,7 +34,7 @@ func ProductDistributorDetailResponse(product *models.ProductDistributor) *Produ
 		Code:          product.Code,
 		Category:      product.Category.Name,
 		Unit:          product.Unit,
-		Thumbnail:     product.Thumbnail,
+		Thumbnail:     product.ThumbnailCDN,
 		Price:         product.Price,
 		BulkPrice:     product.BulkPrice,
 		Weight:        product.Weight,
@@ -57,7 +57,7 @@ func ProductDistributorListResponse(products *[]models.ProductDistributor) []Pro
 			Code:          product.Code,
 			Category:      product.Category.Name,
 			Unit:          product.Unit,
-			Thumbnail:     product.Thumbnail,
+			Thumbnail:     product.ThumbnailCDN,
 			Price:         product.Price,
 			UpdatedAt:     product.UpdatedAt,
 		}

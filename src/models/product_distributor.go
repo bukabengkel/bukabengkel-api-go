@@ -21,6 +21,7 @@ type ProductDistributor struct {
 	Description      string             `bun:"description"`
 	Unit             string             `bun:"unit"`
 	Thumbnail        string             `bun:"thumbnail"`
+	ThumbnailCDN     string             `bun:"-"`
 	Images           []string           `bun:"images,array"`
 	Price            float64            `bun:"price"`
 	BulkPrice        []ProductBulkPrice `bun:"type:jsonb,column:bulk_price"`

@@ -115,10 +115,9 @@ func (r *ProductDistributorRepository) List(ctx context.Context, page int, perPa
 
 	var entityProducts []models.ProductDistributor
 	for _, p := range products {
-		p.Thumbnail = r.fileService.BuildUrl(p.Thumbnail, 200, 200)
+		p.ThumbnailCDN = r.fileService.BuildUrl(p.Thumbnail, 200, 200)
 		entityProducts = append(entityProducts, p)
 	}
-	// entityProducts = append(entityProducts, products...)
 
 	return &entityProducts, count, nil
 }
@@ -182,7 +181,7 @@ func (r *ProductDistributorRepository) FindOne(filter ProductDistributorReposito
 		}
 	}
 
-	product.Thumbnail = r.fileService.BuildUrl(product.Thumbnail, 200, 200)
+	product.ThumbnailCDN = r.fileService.BuildUrl(product.Thumbnail, 200, 200)
 	return &product, nil
 }
 
