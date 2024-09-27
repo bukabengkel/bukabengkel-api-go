@@ -26,6 +26,7 @@ func NewProductDistributorHandler(
 
 	apiV1 := e.Group("/v1/product-distributors")
 	apiV1.GET("", handler.List, middleware.RBAC())
+	apiV1.GET("/:key", handler.Detail, middleware.RBAC())
 }
 
 func (h *ProductDistributorHandler) List(ctx echo.Context) (err error) {
@@ -50,5 +51,29 @@ func (h *ProductDistributorHandler) List(ctx echo.Context) (err error) {
 		http.StatusOK,
 		"Product List",
 		response.ProductDistributorListResponse(products), utils.BuildMeta(dto.Page, dto.PerPage, count),
+	)
+}
+
+func (h *ProductDistributorHandler) Detail(ctx echo.Context) (err error) {
+	dto := request.ProductDistributorDetailDTO{
+		ID: ctx.Param("key"),
+	}
+
+	product, err := h.usecase.Detail(ctx.Request().Context(), dto)
+	if err != nil {
+		return ctx.JSON(utils.ParseHttpError(err))
+	}
+
+	if product == nil {
+		err = utils.NewHttpError(404, "PRODUCT NOT FOUND", nil)
+		return ctx.JSON(utils.ParseHttpError(err))
+	}
+
+	return utils.ResponseJSON(
+		ctx,
+		http.StatusOK,
+		"Product Detail",
+		response.ProductDistributorDetailResponse(product),
+		nil,
 	)
 }

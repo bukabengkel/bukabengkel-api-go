@@ -10,3 +10,7 @@ type ProductDistributorListDTO struct {
 	Code          string
 	RemoteUpdate  string
 }
+
+type ProductDistributorDetailDTO struct {
+	ID string
+}

@@ -54,12 +54,14 @@ func main() {
 	productCatDistRepo := repository.NewProductCategoryDistributorRepository(db)
 	productExportLogRepo := repository.NewProductExportLogRepository(db)
 	orderRepo := repository.NewOrderRepository(db, cacheService)
+	distributorRepo := repository.NewDistributorRepository(db)
 
 	// Usecases
 	reportUsecase := usecase.NewReportUsecase(orderRepo)
 	productUsecase := usecase.NewProductUsecase(productRepo)
-	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo)
+	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo, distributorRepo)
 	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
+	distributorUsecase := usecase.NewDistributorUsecase(distributorRepo)
 
 	e := echo.New()
 	e.Use(middleware.CORSMiddleware())
@@ -68,6 +70,7 @@ func main() {
 	handlers.NewProductHandler(e, middleware, productUsecase)
 	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
 	handlers.NewProductExportLogHandler(e, middleware, productExportLogUsecase)
+	handlers.NewDistributorHandler(e, middleware, distributorUsecase)
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())

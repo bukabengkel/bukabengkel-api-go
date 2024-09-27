@@ -12,17 +12,21 @@ import (
 
 type ProductDistributorUsecase interface {
 	List(ctx context.Context, dto request.ProductDistributorListDTO) (*[]models.ProductDistributor, int, error)
+	Detail(ctx context.Context, dto request.ProductDistributorDetailDTO) (*models.ProductDistributor, error)
 }
 
 type productDistributorUsecase struct {
 	productDistributorRepository repository.ProductDistributorRepository
+	distributorRepository        repository.DistributorRepository
 }
 
 func NewProductDistributorUsecase(
 	productDistributorRepository *repository.ProductDistributorRepository,
+	distributorRepository *repository.DistributorRepository,
 ) *productDistributorUsecase {
 	return &productDistributorUsecase{
 		productDistributorRepository: *productDistributorRepository,
+		distributorRepository:        *distributorRepository,
 	}
 }
 
@@ -39,9 +43,18 @@ func (u *productDistributorUsecase) List(ctx context.Context, dto request.Produc
 		perPage = 10
 	}
 
+	if dto.DistributorID != "" {
+		distributor, _ := u.distributorRepository.FindOne(repository.DistributorRepositoryFilter{
+			Key: &dto.DistributorID,
+		})
+
+		if distributor != nil {
+			filter.DistributorID = &distributor.ID
+		}
+	}
+
 	if dto.Keyword != "" && len(dto.Keyword) >= 3 {
 		filter.Name = utils.String(dto.Keyword)
-
 	}
 
 	sort := "-id"
@@ -55,4 +68,17 @@ func (u *productDistributorUsecase) List(ctx context.Context, dto request.Produc
 	}
 
 	return products, count, nil
+}
+
+func (u *productDistributorUsecase) Detail(ctx context.Context, dto request.ProductDistributorDetailDTO) (*models.ProductDistributor, error) {
+	filter := repository.ProductDistributorRepositoryFilter{
+		ID: &dto.ID,
+	}
+
+	product, err := u.productDistributorRepository.FindOne(filter)
+	if err != nil {
+		err = utils.NewInternalServerError(err)
+	}
+
+	return product, nil
 }
