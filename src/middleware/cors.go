@@ -15,6 +15,7 @@ func (m *Middleware) CORSMiddleware() echo.MiddlewareFunc {
 			"https://admin-dev.bukabengkel.id",
 			"https://admin.bukabengkel.id",
 			"https://user-dev.bukabengkel.id",
+			"https://user-beta.bukabengkel.id",
 			"https://user.bukabengkel.id",
 		},
 		AllowMethods: []string{http.MethodGet},
