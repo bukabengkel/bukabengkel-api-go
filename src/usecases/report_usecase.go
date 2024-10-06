@@ -101,8 +101,6 @@ func (u *reportUsecase) ProductSalesReport(ctx context.Context, dto *request.Pro
 		return nil, nil, err
 	}
 
-	fmt.Println("OK")
-
 	page, perPage, err := utils.ParsePageAndPerPage(dto.Page, dto.PerPage)
 	if err != nil {
 		return nil, nil, err

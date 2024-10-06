@@ -59,6 +59,7 @@ func ProductDistributorListResponse(products *[]models.ProductDistributor) []Pro
 			Unit:          product.Unit,
 			Thumbnail:     product.ThumbnailCDN,
 			Price:         product.Price,
+			BulkPrice:     product.BulkPrice,
 			UpdatedAt:     product.UpdatedAt,
 		}
 		responses = append(responses, *response)

@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/gotidy/ptr"
 	"github.com/peang/bukabengkel-api-go/src/models"
@@ -21,8 +20,7 @@ type ProductRepositoryFilter struct {
 	CategoryId    *string
 	StoreID       *uint
 	StockMoreThan *uint
-	StartDate     *time.Time
-	EndDate       *time.Time
+	Status        *uint
 }
 
 func NewProductRepository(db *bun.DB, imageRepository *ImageRepository) *ProductRepository {
@@ -47,6 +45,10 @@ func (r *ProductRepository) queryBuilder(query *bun.SelectQuery, cond ProductRep
 
 	if cond.StockMoreThan != nil {
 		query.Where("? > ?", bun.Ident("product.stock"), cond.StockMoreThan)
+	}
+
+	if cond.Status != nil {
+		query.Where("? = ?", bun.Ident("product.status"), cond.Status)
 	}
 
 	return query

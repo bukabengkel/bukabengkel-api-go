@@ -44,6 +44,7 @@ func (h *ProductHandler) List(ctx echo.Context) (err error) {
 		CategoryId:    ctx.QueryParam("categoryId"),
 		Name:          ctx.QueryParam("name"),
 		StockMoreThan: ctx.QueryParam("stockMoreThan"),
+		Status:        ctx.QueryParam("status"),
 	}
 
 	products, count, err := h.usecase.List(ctx.Request().Context(), dto)
