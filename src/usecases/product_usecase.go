@@ -50,13 +50,22 @@ func (u *productUsecase) List(ctx context.Context, dto request.ProductListDTO) (
 		filter.CategoryId = utils.String(dto.CategoryId)
 	}
 
-	if dto.StockMoreThan != "" && dto.StockMoreThan != "0" {
+	if dto.StockMoreThan != "" {
 		stockMoreThan, err := strconv.ParseUint(dto.StockMoreThan, 10, 10)
 		if err != nil {
 			return nil, 0, err
 		}
 
 		filter.StockMoreThan = ptr.Of(uint(stockMoreThan))
+	}
+
+	if dto.Status != "" {
+		status, err := strconv.ParseUint(dto.Status, 10, 10)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		filter.Status = ptr.Of(uint(status))
 	}
 
 	sort := "name"

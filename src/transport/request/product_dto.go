@@ -9,4 +9,5 @@ type ProductListDTO struct {
 	Name          string
 	CategoryId    string
 	StockMoreThan string
+	Status        string
 }
