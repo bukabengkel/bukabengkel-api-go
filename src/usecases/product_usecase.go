@@ -42,6 +42,10 @@ func (u *productUsecase) List(ctx context.Context, dto request.ProductListDTO) (
 		perPage = 10
 	}
 
+	if dto.Name != "" && len(dto.Name) >= 3 {
+		filter.Name = utils.String(dto.Name)
+	}
+
 	if dto.Keyword != "" && len(dto.Keyword) >= 3 {
 		filter.Name = utils.String(dto.Keyword)
 	}
