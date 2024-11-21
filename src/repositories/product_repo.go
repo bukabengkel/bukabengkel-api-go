@@ -3,12 +3,21 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/gotidy/ptr"
 	"github.com/peang/bukabengkel-api-go/src/models"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 	"github.com/uptrace/bun"
 )
+
+type ProductCursor struct {
+	ID        uint      `json:"id"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	Name      string    `json:"name,omitempty"`
+	Price     float64   `json:"price,omitempty"`
+}
 
 type ProductRepository struct {
 	db              *bun.DB
@@ -103,4 +112,98 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 	}
 
 	return &entityProducts, count, nil
+}
+
+func (r *ProductRepository) ListV2(ctx context.Context, cursor *ProductCursor, limit int, sort string, filter ProductRepositoryFilter) (*[]models.Product, *ProductCursor, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+
+	var products []models.Product
+	sl := r.db.NewSelect().Model(&products)
+	sl = r.queryBuilder(sl, filter)
+
+	// Parse sort field and direction
+	sortField, sortDir := "created_at", "DESC"
+	if sort != "" {
+		parts := strings.Split(sort, ":")
+		if len(parts) == 2 {
+			sortField = parts[0]
+			sortDir = strings.ToUpper(parts[1])
+		}
+	}
+
+	if cursor != nil {
+		switch sortField {
+		case "created_at":
+			if sortDir == "DESC" {
+				sl.Where("(product.created_at, product.id) < (?, ?)",
+					cursor.CreatedAt, cursor.ID)
+			} else {
+				sl.Where("(product.created_at, product.id) > (?, ?)",
+					cursor.CreatedAt, cursor.ID)
+			}
+		case "name":
+			if sortDir == "DESC" {
+				sl.Where("(product.name, product.id) < (?, ?)",
+					cursor.Name, cursor.ID)
+			} else {
+				sl.Where("(product.name, product.id) > (?, ?)",
+					cursor.Name, cursor.ID)
+			}
+		case "price":
+			if sortDir == "DESC" {
+				sl.Where("(product.price, product.id) < (?, ?)",
+					cursor.Price, cursor.ID)
+			} else {
+				sl.Where("(product.price, product.id) > (?, ?)",
+					cursor.Price, cursor.ID)
+			}
+		}
+	}
+
+	switch sortField {
+	case "created_at":
+		sl.OrderExpr("product.created_at " + sortDir + ", product.id " + sortDir)
+	case "name":
+		sl.OrderExpr("product.name " + sortDir + ", product.id " + sortDir)
+	case "price":
+		sl.OrderExpr("product.price " + sortDir + ", product.id " + sortDir)
+	}
+
+	// Fetch one extra record to determine if there's a next page
+	sl = sl.Limit(limit + 1)
+
+	err := sl.
+		Relation("Store").
+		Relation("Brand").
+		Relation("Category").
+		Scan(ctx)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var nextCursor *ProductCursor
+	if len(products) > limit {
+		// Remove the extra item
+		lastProduct := products[limit-1]
+		products = products[:limit]
+
+		// Generate next cursor based on the last item and sort field
+		nextCursor = &ProductCursor{
+			ID: lastProduct.ID,
+		}
+
+		switch sortField {
+		case "created_at":
+			nextCursor.CreatedAt = lastProduct.CreatedAt
+		case "name":
+			nextCursor.Name = lastProduct.Name
+		case "price":
+			nextCursor.Price = lastProduct.Price
+		}
+	}
+
+	return &products, nextCursor, nil
 }

@@ -17,8 +17,7 @@ type ReportUsecase interface {
 }
 
 type reportUsecase struct {
-	orderRepository   repository.OrderRepository
-	productRepository repository.ProductRepository
+	orderRepository repository.OrderRepository
 }
 
 type SalesOrderResult struct {

@@ -68,6 +68,7 @@ func main() {
 
 	handlers.NewReportHandler(e, middleware, reportUsecase)
 	handlers.NewProductHandler(e, middleware, productUsecase)
+	handlers.NewProductHandlerV2(e, middleware, productUsecase)
 	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
 	handlers.NewProductExportLogHandler(e, middleware, productExportLogUsecase)
 	handlers.NewDistributorHandler(e, middleware, distributorUsecase)

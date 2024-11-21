@@ -18,10 +18,25 @@ type Meta struct {
 	TotalPage int `json:"totalPage"`
 }
 
+type MetaV2 struct {
+	// Page      int `json:"page,omitempty"`
+	// PerPage   int `json:"perPage,omitempty"`
+	// Total     int `json:"total"`
+	// TotalPage int `json:"totalPage"`
+	// CurrentCursor string `json:"currentCursor"`
+	NextCursor string `json:"nextCursor"`
+}
+
 type ResponseMessage struct {
 	Message interface{} `json:"message"`
 	Data    interface{} `json:"data"`
 	Meta    *Meta       `json:"meta,omitempty"`
+}
+
+type ResponseMessageV2 struct {
+	Message interface{} `json:"message"`
+	Data    interface{} `json:"data"`
+	Meta    *MetaV2     `json:"meta,omitempty"`
 }
 
 type ResponseErrorMessage struct {
@@ -47,6 +62,27 @@ func ResponseJSON(
 	w := ctx.Response().Writer
 
 	response := ResponseMessage{
+		Message: message,
+		Data:    data,
+		Meta:    meta,
+	}
+	resp, _ := json.Marshal(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(httpCode)
+	w.Write(resp)
+	return nil
+}
+
+func ResponseJSONV2(
+	ctx echo.Context,
+	httpCode int,
+	message string,
+	data interface{},
+	meta *MetaV2,
+) error {
+	w := ctx.Response().Writer
+
+	response := ResponseMessageV2{
 		Message: message,
 		Data:    data,
 		Meta:    meta,
@@ -93,5 +129,25 @@ func BuildMeta(pageString string, perPageString string, count int) *Meta {
 		PerPage:   perPage,
 		Total:     count,
 		TotalPage: int(math.Ceil(float64(count) / float64(perPage))),
+	}
+}
+
+func BuildMetaV2(nextCursor string) *MetaV2 {
+	// limit, err := strconv.Atoi(limit)
+	// if err != nil || page < 1 {
+	// 	page = 1
+	// }
+
+	// perPage, err := strconv.Atoi(perPageString)
+	// if err != nil || perPage < 1 || perPage > 100 {
+	// 	perPage = 10
+	// }
+
+	return &MetaV2{
+		NextCursor: nextCursor,
+		// Page:      page,
+		// PerPage:   perPage,
+		// Total:     count,
+		// TotalPage: int(math.Ceil(float64(count) / float64(perPage))),
 	}
 }
