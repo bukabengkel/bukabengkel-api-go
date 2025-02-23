@@ -31,6 +31,7 @@ type ProductOrderResult struct {
 	ProductKey      string
 	ProductName     string
 	ProductCategory string
+	ProductUnit     string
 	QtySales        int
 	QtyStock        float64
 }
@@ -122,6 +123,7 @@ func (u *reportUsecase) ProductSalesReport(ctx context.Context, dto *request.Pro
 			ProductKey:      sum.ProductKey,
 			ProductName:     sum.ProductName,
 			ProductCategory: sum.ProductCategory,
+			ProductUnit:     sum.ProductUnit,
 			QtySales:        sum.QtySales,
 			QtyStock:        sum.QtyStock,
 		})

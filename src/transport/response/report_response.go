@@ -14,6 +14,7 @@ type productSalesReportResponse struct {
 	ProductKey      string  `json:"product_key"`
 	ProductName     string  `json:"product_name"`
 	ProductCategory string  `json:"product_category"`
+	ProductUnit     string  `json:"product_unit"`
 	QtySales        int     `json:"qty_sales"`
 	QtyCurrentStock float64 `json:"qty_current_stock"`
 }
@@ -34,6 +35,7 @@ func ProductSalesReportResponse(reports *[]usecase.ProductOrderResult) *[]produc
 			ProductKey:      item.ProductKey,
 			ProductName:     item.ProductName,
 			ProductCategory: item.ProductCategory,
+			ProductUnit:     item.ProductUnit,
 			QtySales:        item.QtySales,
 			QtyCurrentStock: item.QtyStock,
 		})
