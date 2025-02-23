@@ -17,8 +17,8 @@ type ReportUsecase interface {
 }
 
 type reportUsecase struct {
-	orderRepository   repository.OrderRepository
-	productRepository repository.ProductRepository
+	orderRepository repository.OrderRepository
+	// productRepository repository.ProductRepository
 }
 
 type SalesOrderResult struct {
@@ -28,10 +28,11 @@ type SalesOrderResult struct {
 }
 
 type ProductOrderResult struct {
-	ProductKey  string
-	ProductName string
-	QtySales    int
-	QtyStock    float64
+	ProductKey      string
+	ProductName     string
+	ProductCategory string
+	QtySales        int
+	QtyStock        float64
 }
 
 func NewReportUsecase(
@@ -118,10 +119,11 @@ func (u *reportUsecase) ProductSalesReport(ctx context.Context, dto *request.Pro
 	var productOrderResults []ProductOrderResult
 	for _, sum := range *summary {
 		productOrderResults = append(productOrderResults, ProductOrderResult{
-			ProductKey:  sum.ProductKey,
-			ProductName: sum.ProductName,
-			QtySales:    sum.QtySales,
-			QtyStock:    sum.QtyStock,
+			ProductKey:      sum.ProductKey,
+			ProductName:     sum.ProductName,
+			ProductCategory: sum.ProductCategory,
+			QtySales:        sum.QtySales,
+			QtyStock:        sum.QtyStock,
 		})
 	}
 
