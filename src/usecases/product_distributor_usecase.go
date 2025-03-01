@@ -75,7 +75,7 @@ func (u *productDistributorUsecase) Detail(ctx context.Context, dto request.Prod
 		ID: &dto.ID,
 	}
 
-	product, err := u.productDistributorRepository.FindOne(filter)
+	product, err := u.productDistributorRepository.FindOne(ctx, filter)
 	if err != nil {
 		err = utils.NewInternalServerError(err)
 	}
