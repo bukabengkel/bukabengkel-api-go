@@ -20,6 +20,7 @@ type Config struct {
 	CasbinPolicyFilePath string
 	Storage              StorageConfig
 	Cache                CacheConfig
+	RajaOngkirAPIKey     string
 }
 
 type StorageConfig struct {
@@ -84,6 +85,8 @@ func LoadConfig() (config *Config) {
 		}
 	}
 
+	rajaOngkirAPIKey := os.Getenv("RAJAONGKIR_API_KEY")
+
 	return &Config{
 		Env:                  env,
 		Port:                 port,
@@ -109,5 +112,6 @@ func LoadConfig() (config *Config) {
 			CachePassword:    cachePassword,
 			CachePort:        cachePort,
 		},
+		RajaOngkirAPIKey: rajaOngkirAPIKey,
 	}
 }

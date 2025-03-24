@@ -71,7 +71,7 @@ func main() {
 	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
 	handlers.NewProductExportLogHandler(e, middleware, productExportLogUsecase)
 	handlers.NewDistributorHandler(e, middleware, distributorUsecase)
-
+	handlers.NewRajaOngkirHandler(e, middleware, configApp)
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())
 
