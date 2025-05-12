@@ -29,7 +29,7 @@ type Payload struct {
 	StoreName     string
 	StoreType     float64
 	StoreTypeName string
-	StoreLocation models.Location
+	StoreLocation models.RajaOngkirLocation
 }
 
 type jwtService struct {

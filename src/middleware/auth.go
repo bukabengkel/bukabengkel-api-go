@@ -35,9 +35,15 @@ func (m *Middleware) JWTAuth() echo.MiddlewareFunc {
 			c.Set("scope", tokenInfo.Scope)
 
 			if tokenInfo.Payload.StoreID != "" { // This Condition for Bukabengkel Admin
-				stores := strings.Split(tokenInfo.Payload.StoreID, "-")
-				storeId := string(stores[0])
+				storeId, storeKey := strings.Split(tokenInfo.Payload.StoreID, "-")[0], strings.Join(strings.Split(tokenInfo.Payload.StoreID, "-")[1:], "-")
 				c.Set("store_id", storeId)
+				c.Set("store_key", storeKey)
+			}
+
+			if tokenInfo.Payload.ID != "" {
+				userId, userKey := strings.Split(tokenInfo.Payload.ID, "-")[0], strings.Join(strings.Split(tokenInfo.Payload.ID, "-")[1:], "-")
+				c.Set("user_id", userId)
+				c.Set("user_key", userKey)
 			}
 
 			return next(c)
