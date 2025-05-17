@@ -1,8 +1,5 @@
 package response
 
-import (
-	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
-)
 
 type orderSalesReportResponse struct {
 	TotalSales   float32 `json:"total_sales"`
@@ -14,11 +11,27 @@ type productSalesReportResponse struct {
 	ProductKey      string  `json:"product_key"`
 	ProductName     string  `json:"product_name"`
 	ProductCategory string  `json:"product_category"`
+	ProductUnit     string  `json:"product_unit"`
 	QtySales        int     `json:"qty_sales"`
 	QtyCurrentStock float64 `json:"qty_current_stock"`
 }
 
-func OrderSalesReportResponse(reports *usecase.SalesOrderResult) *orderSalesReportResponse {
+type SalesOrderResult struct {
+	TotalSales   float32
+	TotalNett    float32
+	TotalProduct int
+}
+
+type ProductOrderResult struct {
+	ProductKey      string
+	ProductName     string
+	ProductCategory string
+	ProductUnit     string
+	QtySales        int
+	QtyStock        float64
+}
+
+func OrderSalesReportResponse(reports *SalesOrderResult) *orderSalesReportResponse {
 	return &orderSalesReportResponse{
 		TotalSales:   reports.TotalSales,
 		TotalNett:    reports.TotalNett,
@@ -26,7 +39,7 @@ func OrderSalesReportResponse(reports *usecase.SalesOrderResult) *orderSalesRepo
 	}
 }
 
-func ProductSalesReportResponse(reports *[]usecase.ProductOrderResult) *[]productSalesReportResponse {
+func ProductSalesReportResponse(reports *[]ProductOrderResult) *[]productSalesReportResponse {
 	result := []productSalesReportResponse{}
 
 	for _, item := range *reports {
@@ -34,6 +47,7 @@ func ProductSalesReportResponse(reports *[]usecase.ProductOrderResult) *[]produc
 			ProductKey:      item.ProductKey,
 			ProductName:     item.ProductName,
 			ProductCategory: item.ProductCategory,
+			ProductUnit:     item.ProductUnit,
 			QtySales:        item.QtySales,
 			QtyCurrentStock: item.QtyStock,
 		})

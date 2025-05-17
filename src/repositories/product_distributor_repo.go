@@ -14,6 +14,26 @@ import (
 type ProductDistributorRepository struct {
 	db          *bun.DB
 	fileService file_service.FileService
+	statements  *productDistributorStatements
+}
+
+// Separate structure to hold prepared statements
+type productDistributorStatements struct {
+	// Base models and relations for queries
+	listModel     interface{}
+	listRelations []string
+	findOneModel  interface{}
+	findOneRelations []string
+}
+
+// Initialize prepared statements with components
+func newProductDistributorStatements(db *bun.DB) *productDistributorStatements {
+	return &productDistributorStatements{
+		listModel:     (*models.ProductDistributor)(nil),
+		listRelations: []string{"Distributor", "Category"},
+		findOneModel:  (*models.ProductDistributor)(nil),
+		findOneRelations: []string{"Distributor", "Category"},
+	}
 }
 
 type ProductDistributorRepositoryFilter struct {
@@ -32,6 +52,7 @@ func NewProductDistributorRepository(db *bun.DB, fileService file_service.FileSe
 	return &ProductDistributorRepository{
 		db:          db,
 		fileService: fileService,
+		statements:  newProductDistributorStatements(db),
 	}
 }
 
@@ -95,16 +116,23 @@ func (r *ProductDistributorRepository) List(ctx context.Context, page int, perPa
 	offset, limit := utils.GenerateOffsetLimit(page, perPage)
 
 	var products []models.ProductDistributor
+	
+	// Create a new query using the base components
 	sl := r.db.NewSelect().Model(&products)
+	
+	// Add relations
+	for _, relation := range r.statements.listRelations {
+		sl = sl.Relation(relation)
+	}
+	
 	sl = r.queryBuilder(sl, filter)
 
 	count, err := sl.
-		Relation("Distributor").
-		Relation("Category").
 		Limit(limit).
 		Offset(offset).
 		OrderExpr(sorts).
-		ScanAndCount(context.TODO())
+		ScanAndCount(ctx) // Use the passed context
+		
 	if err != nil {
 		return nil, 0, err
 	}
@@ -113,7 +141,8 @@ func (r *ProductDistributorRepository) List(ctx context.Context, page int, perPa
 		return &[]models.ProductDistributor{}, count, nil
 	}
 
-	var entityProducts []models.ProductDistributor
+	// Pre-allocate the result slice with the right capacity
+	entityProducts := make([]models.ProductDistributor, 0, len(products))
 	for _, p := range products {
 		p.ThumbnailCDN = r.fileService.BuildUrl(p.Thumbnail, 200, 200)
 		entityProducts = append(entityProducts, p)
@@ -122,22 +151,13 @@ func (r *ProductDistributorRepository) List(ctx context.Context, page int, perPa
 	return &entityProducts, count, nil
 }
 
-func (r *ProductDistributorRepository) Save(product *models.ProductDistributor) (*models.ProductDistributor, error) {
-	_, err := r.db.NewInsert().Model(product).Returning("id").Exec(context.TODO())
+func (r *ProductDistributorRepository) Save(ctx context.Context, product *models.ProductDistributor) (*models.ProductDistributor, error) {
+	_, err := r.db.NewInsert().Model(product).Returning("id").Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	err = r.db.NewSelect().Model(product).WherePK().Scan(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-
-	return product, nil
-}
-
-func (r *ProductDistributorRepository) Update(product *models.ProductDistributor) (*models.ProductDistributor, error) {
-	_, err := r.db.NewUpdate().Model(product).Where("id = ?", product.ID).Exec(context.TODO())
+	err = r.db.NewSelect().Model(product).WherePK().Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -145,13 +165,22 @@ func (r *ProductDistributorRepository) Update(product *models.ProductDistributor
 	return product, nil
 }
 
-func (r *ProductDistributorRepository) UpdateWithCondition(filter ProductDistributorRepositoryFilter, values ProductDistributorRepositoryValues) (int64, error) {
+func (r *ProductDistributorRepository) Update(ctx context.Context, product *models.ProductDistributor) (*models.ProductDistributor, error) {
+	_, err := r.db.NewUpdate().Model(product).Where("id = ?", product.ID).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
+func (r *ProductDistributorRepository) UpdateWithCondition(ctx context.Context, filter ProductDistributorRepositoryFilter, values ProductDistributorRepositoryValues) (int64, error) {
 	var product models.ProductDistributor
 
 	sl := r.db.NewUpdate().Model(&product)
 	sl = r.updateQueryBuilder(sl, filter, values)
 
-	res, err := sl.Exec(context.TODO())
+	res, err := sl.Exec(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -164,15 +193,20 @@ func (r *ProductDistributorRepository) UpdateWithCondition(filter ProductDistrib
 	return count, nil
 }
 
-func (r *ProductDistributorRepository) FindOne(filter ProductDistributorRepositoryFilter) (*models.ProductDistributor, error) {
+func (r *ProductDistributorRepository) FindOne(ctx context.Context, filter ProductDistributorRepositoryFilter) (*models.ProductDistributor, error) {
 	var product models.ProductDistributor
 
-	sl := r.db.NewSelect().Model(&product).
-		Relation("Distributor").
-		Relation("Category")
+	// Create a new query using the base components
+	sl := r.db.NewSelect().Model(&product)
+	
+	// Add relations
+	for _, relation := range r.statements.findOneRelations {
+		sl = sl.Relation(relation)
+	}
+	
 	sl = r.queryBuilder(sl, filter)
 
-	err := sl.Scan(context.TODO())
+	err := sl.Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -185,8 +219,8 @@ func (r *ProductDistributorRepository) FindOne(filter ProductDistributorReposito
 	return &product, nil
 }
 
-func (r *ProductDistributorRepository) Delete(product *models.ProductDistributor) error {
-	_, err := r.db.NewDelete().Model(product).Where("id = ?", product.ID).Exec(context.TODO())
+func (r *ProductDistributorRepository) Delete(ctx context.Context, product *models.ProductDistributor) error {
+	_, err := r.db.NewDelete().Model(product).Where("id = ?", product.ID).Exec(ctx)
 	if err != nil {
 		return err
 	}
@@ -194,13 +228,13 @@ func (r *ProductDistributorRepository) Delete(product *models.ProductDistributor
 	return nil
 }
 
-func (r *ProductDistributorRepository) DeleteWithCondition(filter ProductDistributorRepositoryFilter) (int64, error) {
+func (r *ProductDistributorRepository) DeleteWithCondition(ctx context.Context, filter ProductDistributorRepositoryFilter) (int64, error) {
 	var product models.ProductDistributor
 
 	sl := r.db.NewDelete().Model(&product)
 	sl = r.deleteQueryBuilder(sl, filter)
 
-	res, err := sl.Exec(context.TODO())
+	res, err := sl.Exec(ctx)
 	if err != nil {
 		return 0, err
 	}

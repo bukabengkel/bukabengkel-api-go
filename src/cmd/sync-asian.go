@@ -121,6 +121,7 @@ func (s *SyncAsian) Execute() {
 	)
 
 	s.productDistributorRepo.UpdateWithCondition(
+		context.Background(),
 		repository.ProductDistributorRepositoryFilter{
 			DistributorID: utils.Uint64(1),
 		},
@@ -306,7 +307,7 @@ func (s *SyncAsian) syncProduct(
 	for product := range ch {
 		fmt.Printf("\rProduct Created %v Product Updated %v", *totalCreated, *totalUpdated)
 
-		p, err := s.productDistributorRepo.FindOne(repository.ProductDistributorRepositoryFilter{
+		p, err := s.productDistributorRepo.FindOne(context.Background(), repository.ProductDistributorRepositoryFilter{
 			DistributorID: utils.Uint64(1),
 			Code:          &product.Code,
 		})
@@ -380,7 +381,7 @@ func (s *SyncAsian) syncProduct(
 				RemoteUpdate:     true,
 			}
 
-			_, err = s.productDistributorRepo.Save(&newProductDistributor)
+			_, err = s.productDistributorRepo.Save(context.Background(), &newProductDistributor)
 			if err != nil {
 				newErr := fmt.Errorf("error_inserting_product;%s;%v", product.Name, err.Error())
 				chErr <- newErr
@@ -398,7 +399,7 @@ func (s *SyncAsian) syncProduct(
 			p.RemoteUpdate = true
 			p.UpdatedAt = time.Now()
 
-			_, err := s.productDistributorRepo.Update(p)
+			_, err := s.productDistributorRepo.Update(context.Background(), p)
 			if err != nil {
 				newErr := fmt.Errorf("error_updating_product;%s;%v", product.Name, err.Error())
 				chErr <- newErr
@@ -450,7 +451,7 @@ func (s *SyncAsian) remove() {
 			if len(product.Images) > 0 {
 				s.fileService.Delete(product.Images[0])
 			}
-			s.productDistributorRepo.Delete(&product)
+			s.productDistributorRepo.Delete(context.Background(), &product)
 		}
 	}
 }

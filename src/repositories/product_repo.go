@@ -13,6 +13,7 @@ import (
 type ProductRepository struct {
 	db              *bun.DB
 	imageRepository *ImageRepository
+	statements      *productStatements
 }
 
 type ProductRepositoryFilter struct {
@@ -23,10 +24,26 @@ type ProductRepositoryFilter struct {
 	Status        *uint
 }
 
+// Separate structure to hold prepared statements
+type productStatements struct {
+	// Base model and relations for list query
+	listModel     interface{}
+	listRelations []string
+}
+
+// Initialize prepared statements with components rather than full queries
+func newProductStatements(db *bun.DB) *productStatements {
+	return &productStatements{
+		listModel: (*models.Product)(nil),
+		listRelations: []string{"Store", "Brand", "Category"},
+	}
+}
+
 func NewProductRepository(db *bun.DB, imageRepository *ImageRepository) *ProductRepository {
 	return &ProductRepository{
 		db:              db,
 		imageRepository: imageRepository,
+		statements:      newProductStatements(db),
 	}
 }
 
@@ -59,14 +76,23 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 	offset, limit := utils.GenerateOffsetLimit(page, perPage)
 
 	var products []models.Product
+	
+	// Create a new query using the base components
 	sl := r.db.NewSelect().Model(&products)
+	
+	// Add relations
+	for _, relation := range r.statements.listRelations {
+		sl = sl.Relation(relation)
+	}
+	
 	sl = r.queryBuilder(sl, filter)
 
 	count, err := sl.
-		Relation("Store").
-		Relation("Brand").
-		Relation("Category").
-		Limit(limit).Offset(offset).OrderExpr(sorts).ScanAndCount(context.TODO())
+		Limit(limit).
+		Offset(offset).
+		OrderExpr(sorts).
+		ScanAndCount(ctx)
+	
 	if err != nil {
 		return nil, 0, err
 	}
@@ -75,11 +101,9 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 		return &[]models.Product{}, count, nil
 	}
 
-	var entityProducts []models.Product
-	var entityProductIds []uint
+	entityProductIds := make([]uint, 0, len(products))
 	for _, p := range products {
 		entityProductIds = append(entityProductIds, p.ID)
-		entityProducts = append(entityProducts, p)
 	}
 
 	images, err := r.imageRepository.Find(ctx, 1, 50, "id", ImageRepositoryFilter{
@@ -88,19 +112,18 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 	})
 
 	if err == nil {
-		for key, p := range entityProducts {
-			var productImages []models.Image
-			for _, img := range images {
-				if img.EntityID == p.ID {
-					img.Path = r.imageRepository.fileService.BuildUrl(img.Path, 500, 500)
-					productImages = append(productImages, img)
-				}
-			}
+		imageMap := make(map[uint][]models.Image)
+		for _, img := range images {
+			img.Path = r.imageRepository.fileService.BuildUrl(img.Path, 500, 500)
+			imageMap[img.EntityID] = append(imageMap[img.EntityID], img)
+		}
 
-			p.Images = productImages
-			entityProducts[key] = p
+		for i := range products {
+			if imgs, ok := imageMap[products[i].ID]; ok {
+				products[i].Images = imgs
+			}
 		}
 	}
 
-	return &entityProducts, count, nil
+	return &products, count, nil
 }

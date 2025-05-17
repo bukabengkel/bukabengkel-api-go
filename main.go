@@ -14,8 +14,9 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/handlers"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
-	cache_service "github.com/peang/bukabengkel-api-go/src/services/cache_services"
-	file_service "github.com/peang/bukabengkel-api-go/src/services/file_services"
+	"github.com/peang/bukabengkel-api-go/src/services/cache_services"
+	"github.com/peang/bukabengkel-api-go/src/services/file_services"
+	"github.com/peang/bukabengkel-api-go/src/services/shipping_services"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
 	"github.com/robfig/cron/v3"
@@ -33,16 +34,22 @@ func main() {
 	db := config.LoadDatabase(configApp)
 	defer db.Close()
 
+	redis := config.LoadRedis(configApp)
+	defer redis.Close()
+
 	// Setup Casbin Enfocer
 	enfocer, err := config.NewCasbinEnfocer(configApp)
 	utils.PanicIfNeeded(err)
 
 	// services
 	jwtService := config.NewJWTService(configApp.JWTSecretKey, configApp.BaseURL)
-	fileService, err := file_service.NewFileService(configApp)
+	fileService, err := file_services.NewFileService(configApp)
 	utils.PanicIfNeeded(err)
-
-	cacheService, err := cache_service.NewCacheService(configApp)
+	
+	shippingService, err := shipping_services.NewShippingService(configApp)
+	utils.PanicIfNeeded(err)
+	
+	cacheService, err := cache_services.NewCacheService(configApp)
 	utils.PanicIfNeeded(err)
 
 	middleware := middleware.NewMiddleware(enfocer, appLogger, jwtService)
@@ -55,13 +62,16 @@ func main() {
 	productExportLogRepo := repository.NewProductExportLogRepository(db)
 	orderRepo := repository.NewOrderRepository(db, cacheService)
 	distributorRepo := repository.NewDistributorRepository(db)
-
+	cartRepo := repository.NewCartRepository(redis)
+	storeRepo := repository.NewStoreRepository(db)
+	locationRepo := repository.NewLocationRepository(db)
 	// Usecases
 	reportUsecase := usecase.NewReportUsecase(orderRepo)
 	productUsecase := usecase.NewProductUsecase(productRepo)
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo, distributorRepo)
 	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
 	distributorUsecase := usecase.NewDistributorUsecase(distributorRepo)
+	cartUsecase := usecase.NewCartShoppingUsecase(cartRepo, distributorRepo, storeRepo, locationRepo, shippingService)
 
 	e := echo.New()
 	e.Use(middleware.CORSMiddleware())
@@ -71,6 +81,8 @@ func main() {
 	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
 	handlers.NewProductExportLogHandler(e, middleware, productExportLogUsecase)
 	handlers.NewDistributorHandler(e, middleware, distributorUsecase)
+	handlers.NewLocationHandler(e, middleware, configApp, shippingService)
+	handlers.NewCartShoppingHandler(e, middleware, cartUsecase)
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())

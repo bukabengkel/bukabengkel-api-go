@@ -20,6 +20,7 @@ type Config struct {
 	CasbinPolicyFilePath string
 	Storage              StorageConfig
 	Cache                CacheConfig
+	ShippingProvider     ShippingProviderConfig
 }
 
 type StorageConfig struct {
@@ -37,6 +38,11 @@ type CacheConfig struct {
 	CacheUsername    string
 	CachePassword    string
 	CachePort        int
+}
+
+type ShippingProviderConfig struct {
+	ShippingProviderName string
+	ShippingProviderAPIKey string
 }
 
 // LoadConfig will load config from environment variable
@@ -84,6 +90,9 @@ func LoadConfig() (config *Config) {
 		}
 	}
 
+	shippingProviderName := os.Getenv("SHIPPING_PROVIDER")
+	shippingProviderAPIKey := os.Getenv("SHIPPING_PROVIDER_API_KEY")
+
 	return &Config{
 		Env:                  env,
 		Port:                 port,
@@ -108,6 +117,10 @@ func LoadConfig() (config *Config) {
 			CacheUsername:    cacheUsername,
 			CachePassword:    cachePassword,
 			CachePort:        cachePort,
+		},
+		ShippingProvider: ShippingProviderConfig{
+			ShippingProviderName: shippingProviderName,
+			ShippingProviderAPIKey: shippingProviderAPIKey,
 		},
 	}
 }

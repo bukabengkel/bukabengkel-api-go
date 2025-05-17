@@ -8,31 +8,18 @@ import (
 	"github.com/gotidy/ptr"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
+	"github.com/peang/bukabengkel-api-go/src/transport/response"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 )
 
 type ReportUsecase interface {
-	OrderSalesReport(ctx context.Context, dto *request.OrderSalesReportDTO) (*SalesOrderResult, error)
-	ProductSalesReport(ctx context.Context, dto *request.ProductSalesRxeportDTO) (*[]ProductOrderResult, *int, error)
+	OrderSalesReport(ctx context.Context, dto *request.OrderSalesReportDTO) (*response.SalesOrderResult, error)
+	ProductSalesReport(ctx context.Context, dto *request.ProductSalesRxeportDTO) (*[]response.ProductOrderResult, *int, error)
 }
 
 type reportUsecase struct {
 	orderRepository repository.OrderRepository
 	// productRepository repository.ProductRepository
-}
-
-type SalesOrderResult struct {
-	TotalSales   float32
-	TotalNett    float32
-	TotalProduct int
-}
-
-type ProductOrderResult struct {
-	ProductKey      string
-	ProductName     string
-	ProductCategory string
-	QtySales        int
-	QtyStock        float64
 }
 
 func NewReportUsecase(
@@ -74,7 +61,7 @@ func (u *reportUsecase) dateReportValidator(start string, end string) (startDate
 	return
 }
 
-func (u *reportUsecase) OrderSalesReport(ctx context.Context, dto *request.OrderSalesReportDTO) (*SalesOrderResult, error) {
+func (u *reportUsecase) OrderSalesReport(ctx context.Context, dto *request.OrderSalesReportDTO) (*response.SalesOrderResult, error) {
 	startDate, endDate, err := u.dateReportValidator(dto.StartDate, dto.EndDate)
 	if err != nil {
 		return nil, err
@@ -89,14 +76,14 @@ func (u *reportUsecase) OrderSalesReport(ctx context.Context, dto *request.Order
 		return nil, err
 	}
 
-	return &SalesOrderResult{
+	return &response.SalesOrderResult{
 		TotalSales:   summary.TotalSales,
 		TotalNett:    summary.TotalNett,
 		TotalProduct: summary.TotalProduct,
 	}, nil
 }
 
-func (u *reportUsecase) ProductSalesReport(ctx context.Context, dto *request.ProductSalesRxeportDTO) (*[]ProductOrderResult, *int, error) {
+func (u *reportUsecase) ProductSalesReport(ctx context.Context, dto *request.ProductSalesRxeportDTO) (*[]response.ProductOrderResult, *int, error) {
 	startDate, endDate, err := u.dateReportValidator(dto.StartDate, dto.EndDate)
 	if err != nil {
 		return nil, nil, err
@@ -116,12 +103,13 @@ func (u *reportUsecase) ProductSalesReport(ctx context.Context, dto *request.Pro
 		return nil, nil, err
 	}
 
-	var productOrderResults []ProductOrderResult
+	var productOrderResults []response.ProductOrderResult
 	for _, sum := range *summary {
-		productOrderResults = append(productOrderResults, ProductOrderResult{
+		productOrderResults = append(productOrderResults, response.ProductOrderResult{
 			ProductKey:      sum.ProductKey,
 			ProductName:     sum.ProductName,
 			ProductCategory: sum.ProductCategory,
+			ProductUnit:     sum.ProductUnit,
 			QtySales:        sum.QtySales,
 			QtyStock:        sum.QtyStock,
 		})
