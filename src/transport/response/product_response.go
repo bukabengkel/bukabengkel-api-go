@@ -67,6 +67,10 @@ func ProductDetailResponse(product *models.Product) *productDetailResponse {
 }
 
 func ProductListResponse(products *[]models.Product) []productDetailResponse {
+	if products == nil {
+		return []productDetailResponse{}
+	}
+
 	var responses = make([]productDetailResponse, 0)
 	for _, product := range *products {
 		response := ProductDetailResponse(&product)
