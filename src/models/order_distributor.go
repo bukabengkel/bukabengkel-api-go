@@ -12,6 +12,9 @@ type OrderDistributorStatus string
 const (
 	OrderDistributorStatusCreated              OrderDistributorStatus = "created"
 	OrderDistributorStatusWaitingForPayment    OrderDistributorStatus = "waiting_for_payment"
+	// Midtrans
+	OrderDistributorStatusWaitingForPaymentResponse OrderDistributorStatus = "waiting_payment_response"
+	//... other status
 	OrderDistributorStatusWaitingForShipment   OrderDistributorStatus = "waiting_for_shippment"
 	OrderDistributorStatusInShipping           OrderDistributorStatus = "in_shipping"
 	OrderDistributorStatusCustomerReceived     OrderDistributorStatus = "customer_received"
@@ -46,11 +49,11 @@ type OrderDistributorTransactionLog struct {
 type OrderDistributor struct {
 	bun.BaseModel `bun:"table:order_distributor"`
 
-	ID                      int                              `bun:"id,pk,autoincrement"`
+	ID                      uint                              `bun:"id,pk,autoincrement"`
 	Key                     uuid.UUID                        `bun:"key,type:uuid,notnull,unique"`
-	DistributorID           int                              `bun:"distributor_id,notnull"`
+	DistributorID           uint                              `bun:"distributor_id,notnull"`
 	DistributorName         string                           `bun:"distributor_name,notnull"`
-	CustomerID              int                              `bun:"customer_id,notnull"`
+	CustomerID              uint                              `bun:"customer_id,notnull"`
 	CustomerName            string                           `bun:"customer_name,notnull"`
 	ShippingProvider        string                           `bun:"shipping_provider"`
 	ShippingProviderService string                           `bun:"shipping_provider_service"`

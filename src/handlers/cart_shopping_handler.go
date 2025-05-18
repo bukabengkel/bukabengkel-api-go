@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
@@ -14,12 +14,12 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/utils"
 )
 
-type CartHandler struct {
+type CartShoppingHandler struct {
 	cartUsecase usecase.CartShoppingUsecase
 }
 
 func NewCartShoppingHandler(e *echo.Echo, middleware *middleware.Middleware, cartUsecase usecase.CartShoppingUsecase) {
-	handler := &CartHandler{
+	handler := &CartShoppingHandler{
 		cartUsecase: cartUsecase,
 	}
 
@@ -28,31 +28,31 @@ func NewCartShoppingHandler(e *echo.Echo, middleware *middleware.Middleware, car
 	apiV1.POST("/:distributor_id/checkout", handler.Checkout)
 }
 
-func (h *CartHandler) GetShippingRate(ctx echo.Context) error {
+func (h *CartShoppingHandler) GetShippingRate(ctx echo.Context) error {
 	distributorId := ctx.Param("distributor_id")
 	if distributorId == "" {
-		return ctx.JSON(utils.ParseHttpError(errors.New("distributor_id is required")))
+		return utils.NewBadRequestError("distributor_id is required")
 	}
 
 	storeId, err := strconv.Atoi(ctx.Get("store_id").(string))
 	if err != nil {
-		return ctx.JSON(utils.ParseHttpError(err))
+		return utils.NewAuthenticationFailedError("store_id is required")
 	}
 
 	userId, err := strconv.Atoi(ctx.Get("user_id").(string))
 	if err != nil {
-		return ctx.JSON(utils.ParseHttpError(err))
+		return utils.NewAuthenticationFailedError("user_id is required")
 	}
 
-	dto := request.CartGetShippingRateDTO{
-		StoreID: uint64(storeId),
-		UserID:  uint64(userId),
+	dto := request.CartShoppingGetShippingRateDTO{
+		StoreID:       uint64(storeId),
+		UserID:        uint64(userId),
 		DistributorID: distributorId,
 	}
 
 	distributor, distributorLocation, cartItems, shippingCost, err := h.cartUsecase.CartShipping(ctx.Request().Context(), &dto)
 	if err != nil {
-		return ctx.JSON(utils.ParseHttpError(err))
+		return ctx.JSON(http.StatusUnprocessableEntity, err)
 	}
 
 	return utils.ResponseJSON(
@@ -66,38 +66,48 @@ func (h *CartHandler) GetShippingRate(ctx echo.Context) error {
 			shippingCost,
 		),
 		nil,
-	)	
+	)
 }
 
-func (h *CartHandler) Checkout(ctx echo.Context) error {
-	distributorId := ctx.Param("distributor_id")
+func (h *CartShoppingHandler) Checkout(c echo.Context) error {
+	var dto request.CartShoppingCheckoutDTO
+	if err := c.Bind(&dto); err != nil {
+		return c.JSON(utils.ParseHttpError(err))
+	}
+
+	if err := c.Validate(dto); err != nil {
+		return utils.NewHTTPValidationError(c, err.(validator.ValidationErrors))
+	}
+
+	distributorId := c.Param("distributor_id")
 	if distributorId == "" {
-		return ctx.JSON(utils.ParseHttpError(errors.New("distributor_id is required")))
+		return c.JSON(utils.ParseHttpError(errors.New("distributor_id is required")))
 	}
 
-	storeId, err := strconv.Atoi(ctx.Get("store_id").(string))
+	storeId, err := strconv.Atoi(c.Get("store_id").(string))
 	if err != nil {
-		return ctx.JSON(utils.ParseHttpError(err))
+		return c.JSON(utils.ParseHttpError(errors.New("store_id is required")))
 	}
 
-	userId, err := strconv.Atoi(ctx.Get("user_id").(string))
+	userId, err := strconv.Atoi(c.Get("user_id").(string))
 	if err != nil {
-		return ctx.JSON(utils.ParseHttpError(err))
+		return c.JSON(utils.ParseHttpError(errors.New("user_id is required")))
 	}
 
-	dto := request.CartCheckoutDTO{
-		StoreID: uint64(storeId),
-		UserID:  uint64(userId),
-		DistributorID: distributorId,
+	dto.StoreID = uint64(storeId)
+	dto.UserID = uint64(userId)
+	dto.DistributorID = distributorId
+
+	_, err = h.cartUsecase.CartCheckout(c.Request().Context(), &dto)
+	if err != nil {
+		return c.JSON(utils.ParseHttpError(err))
 	}
 
-	fmt.Println(dto)
-	
 	return utils.ResponseJSON(
-		ctx,
+		c,
 		http.StatusOK,
 		"Checkout",
 		nil,
 		nil,
-	)	
+	)
 }

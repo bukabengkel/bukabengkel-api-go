@@ -21,6 +21,7 @@ type Config struct {
 	Storage              StorageConfig
 	Cache                CacheConfig
 	ShippingProvider     ShippingProviderConfig
+	AsianAccessoriesAPIKey string
 }
 
 type StorageConfig struct {
@@ -93,6 +94,8 @@ func LoadConfig() (config *Config) {
 	shippingProviderName := os.Getenv("SHIPPING_PROVIDER")
 	shippingProviderAPIKey := os.Getenv("SHIPPING_PROVIDER_API_KEY")
 
+	asianAccessoriesAPIKey := os.Getenv("ASIAN_ACCESSORIES_API_KEY")
+
 	return &Config{
 		Env:                  env,
 		Port:                 port,
@@ -122,5 +125,6 @@ func LoadConfig() (config *Config) {
 			ShippingProviderName: shippingProviderName,
 			ShippingProviderAPIKey: shippingProviderAPIKey,
 		},
+		AsianAccessoriesAPIKey: asianAccessoriesAPIKey,
 	}
 }

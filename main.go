@@ -8,6 +8,7 @@ import (
 
 	_ "net/http/pprof"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/peang/bukabengkel-api-go/src/cmd"
 	"github.com/peang/bukabengkel-api-go/src/config"
@@ -17,8 +18,10 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/services/cache_services"
 	"github.com/peang/bukabengkel-api-go/src/services/file_services"
 	"github.com/peang/bukabengkel-api-go/src/services/shipping_services"
+	"github.com/peang/bukabengkel-api-go/src/transport/request"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
+
 	"github.com/robfig/cron/v3"
 )
 
@@ -75,6 +78,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.CORSMiddleware())
+	e.Validator = &request.CustomValidator{ Validator: validator.New()}
 
 	handlers.NewReportHandler(e, middleware, reportUsecase)
 	handlers.NewProductHandler(e, middleware, productUsecase)
@@ -98,6 +102,7 @@ func main() {
 		log.Fatal("Fail to Register Cron")
 	}
 	c.Start()
+	defer c.Stop()
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", configApp.Port)))
 
