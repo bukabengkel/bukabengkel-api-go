@@ -17,9 +17,11 @@ import (
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
 	"github.com/peang/bukabengkel-api-go/src/services/cache_services"
 	"github.com/peang/bukabengkel-api-go/src/services/file_services"
+	"github.com/peang/bukabengkel-api-go/src/services/payment_services"
 	"github.com/peang/bukabengkel-api-go/src/services/shipping_services"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
+	orderDistributorUsecase "github.com/peang/bukabengkel-api-go/src/usecases/order_distributor.go"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
 
 	"github.com/robfig/cron/v3"
@@ -48,10 +50,13 @@ func main() {
 	jwtService := config.NewJWTService(configApp.JWTSecretKey, configApp.BaseURL)
 	fileService, err := file_services.NewFileService(configApp)
 	utils.PanicIfNeeded(err)
-	
+
 	shippingService, err := shipping_services.NewShippingService(configApp)
 	utils.PanicIfNeeded(err)
-	
+
+	paymentService, err := payment_services.NewPaymentService(configApp)
+	utils.PanicIfNeeded(err)
+
 	cacheService, err := cache_services.NewCacheService(configApp)
 	utils.PanicIfNeeded(err)
 
@@ -64,21 +69,25 @@ func main() {
 	productCatDistRepo := repository.NewProductCategoryDistributorRepository(db)
 	productExportLogRepo := repository.NewProductExportLogRepository(db)
 	orderRepo := repository.NewOrderRepository(db, cacheService)
+	orderDistributorRepo := repository.NewOrderDistributorRepository(db, cacheService)
 	distributorRepo := repository.NewDistributorRepository(db)
 	cartRepo := repository.NewCartRepository(redis)
-	storeRepo := repository.NewStoreRepository(db)
+	// storeRepo := repository.NewStoreRepository(db)
+	userStoreRepo := repository.NewUserStoreAggregateRepository(db)
 	locationRepo := repository.NewLocationRepository(db)
+
 	// Usecases
 	reportUsecase := usecase.NewReportUsecase(orderRepo)
 	productUsecase := usecase.NewProductUsecase(productRepo)
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo, distributorRepo)
 	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
 	distributorUsecase := usecase.NewDistributorUsecase(distributorRepo)
-	cartUsecase := usecase.NewCartShoppingUsecase(cartRepo, distributorRepo, storeRepo, locationRepo, shippingService)
+	cartUsecase := usecase.NewCartShoppingUsecase(cartRepo, distributorRepo, userStoreRepo, locationRepo, orderDistributorRepo, shippingService, paymentService)
+	orderDistributorUsecase := orderDistributorUsecase.NewOrderDistributorUsecase(orderDistributorRepo)
 
 	e := echo.New()
 	e.Use(middleware.CORSMiddleware())
-	e.Validator = &request.CustomValidator{ Validator: validator.New()}
+	e.Validator = &request.CustomValidator{Validator: validator.New()}
 
 	handlers.NewReportHandler(e, middleware, reportUsecase)
 	handlers.NewProductHandler(e, middleware, productUsecase)
@@ -87,6 +96,7 @@ func main() {
 	handlers.NewDistributorHandler(e, middleware, distributorUsecase)
 	handlers.NewLocationHandler(e, middleware, configApp, shippingService)
 	handlers.NewCartShoppingHandler(e, middleware, cartUsecase)
+	handlers.NewOrderDistributorHandler(e, middleware, orderDistributorUsecase)
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())

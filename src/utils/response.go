@@ -12,37 +12,43 @@ import (
 
 // Meta consist of pagination details
 type Meta struct {
-	Page      int `json:"page,omitempty"`
-	PerPage   int `json:"perPage,omitempty"`
+	Page      int `json:"page"`
+	PerPage   int `json:"perPage"`
 	Total     int `json:"total"`
 	TotalPage int `json:"totalPage"`
 }
 
+type MetaV2 struct {
+	Page    int  `json:"page"`
+	PerPage int  `json:"perPage"`
+	Next    bool `json:"next"`
+}
+
 type ResponseMessage struct {
-	Message interface{} `json:"message"`
-	Data    interface{} `json:"data"`
-	Meta    *Meta       `json:"meta,omitempty"`
+	Message any `json:"message"`
+	Data    any `json:"data"`
+	Meta    any `json:"meta,omitempty"`
 }
 
 type ResponseErrorMessage struct {
-	Message interface{} `json:"message,omitempty"`
-	Code    int         `json:"code,omitempty"`
-	Detail  interface{} `json:"detail,omitempty"`
-	Trace   interface{} `json:"trace,omitempty"`
+	Message any `json:"message,omitempty"`
+	Code    int `json:"code,omitempty"`
+	Detail  any `json:"detail,omitempty"`
+	Trace   any `json:"trace,omitempty"`
 }
 
 type Error struct {
-	Message string      `json:"message"`
-	Code    int         `json:"code"`
-	Error   interface{} `json:"error"`
+	Message string `json:"message"`
+	Code    int    `json:"code"`
+	Error   any    `json:"error"`
 }
 
 func ResponseJSON(
 	ctx echo.Context,
 	httpCode int,
 	message string,
-	data interface{},
-	meta *Meta,
+	data any,
+	meta any,
 ) error {
 	w := ctx.Response().Writer
 
@@ -93,5 +99,23 @@ func BuildMeta(pageString string, perPageString string, count int) *Meta {
 		PerPage:   perPage,
 		Total:     count,
 		TotalPage: int(math.Ceil(float64(count) / float64(perPage))),
+	}
+}
+
+func BuildMetaV2(pageString string, perPageString string, next bool) *MetaV2 {
+	page, err := strconv.Atoi(pageString)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	perPage, err := strconv.Atoi(perPageString)
+	if err != nil || perPage < 1 || perPage > 100 {
+		perPage = 10
+	}
+
+	return &MetaV2{
+		Page:    page,
+		PerPage: perPage,
+		Next:    next,
 	}
 }

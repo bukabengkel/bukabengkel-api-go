@@ -64,3 +64,14 @@ func (r *CartRepository) GetCartShopping(ctx context.Context, storeID uint64, us
 
 	return cart, nil
 }
+
+func (r *CartRepository) EmptyCartShopping(ctx context.Context, storeID uint64, userID uint64) error {
+	cartKey := r.getCartKey(storeID, userID)
+
+	_, err := r.memoryDB.Del(ctx, cartKey).Result()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

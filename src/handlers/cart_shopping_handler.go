@@ -24,8 +24,8 @@ func NewCartShoppingHandler(e *echo.Echo, middleware *middleware.Middleware, car
 	}
 
 	apiV1 := e.Group("/v1/cart-shopping")
-	apiV1.GET("/:distributor_id/shipping-rate", handler.GetShippingRate)
-	apiV1.POST("/:distributor_id/checkout", handler.Checkout)
+	apiV1.GET("/:distributor_id/shipping-rate", handler.GetShippingRate, middleware.RBAC())
+	apiV1.POST("/:distributor_id/checkout", handler.Checkout, middleware.RBAC())
 }
 
 func (h *CartShoppingHandler) GetShippingRate(ctx echo.Context) error {
@@ -98,7 +98,7 @@ func (h *CartShoppingHandler) Checkout(c echo.Context) error {
 	dto.UserID = uint64(userId)
 	dto.DistributorID = distributorId
 
-	_, err = h.cartUsecase.CartCheckout(c.Request().Context(), &dto)
+	checkoutResponse, err := h.cartUsecase.CartCheckout(c.Request().Context(), &dto)
 	if err != nil {
 		return c.JSON(utils.ParseHttpError(err))
 	}
@@ -107,7 +107,11 @@ func (h *CartShoppingHandler) Checkout(c echo.Context) error {
 		c,
 		http.StatusOK,
 		"Checkout",
-		nil,
+		response.CartShoppingCheckoutResponse(
+			checkoutResponse.OrderID,
+			checkoutResponse.OrderAmount,
+			checkoutResponse.PaymentURL,
+		),
 		nil,
 	)
 }

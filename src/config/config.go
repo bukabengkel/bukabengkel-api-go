@@ -21,6 +21,8 @@ type Config struct {
 	Storage              StorageConfig
 	Cache                CacheConfig
 	ShippingProvider     ShippingProviderConfig
+	PaymentProvider      PaymentProviderConfig
+	EmailProvider        EmailConfig
 	AsianAccessoriesAPIKey string
 }
 
@@ -44,6 +46,16 @@ type CacheConfig struct {
 type ShippingProviderConfig struct {
 	ShippingProviderName string
 	ShippingProviderAPIKey string
+}
+
+type PaymentProviderConfig struct {
+	PaymentProviderName string
+	PaymentProviderAPIKey string
+}
+
+type EmailConfig struct {
+	EmailServiceName string
+	EmailAPIKey      string
 }
 
 // LoadConfig will load config from environment variable
@@ -94,6 +106,12 @@ func LoadConfig() (config *Config) {
 	shippingProviderName := os.Getenv("SHIPPING_PROVIDER")
 	shippingProviderAPIKey := os.Getenv("SHIPPING_PROVIDER_API_KEY")
 
+	paymentProviderName := os.Getenv("PAYMENT_PROVIDER")
+	paymentProviderAPIKey := os.Getenv("PAYMENT_PROVIDER_API_KEY")
+
+	emailServiceName := os.Getenv("EMAIL_SERVICE")
+	emailAPIKey := os.Getenv("EMAIL_API_KEY")
+
 	asianAccessoriesAPIKey := os.Getenv("ASIAN_ACCESSORIES_API_KEY")
 
 	return &Config{
@@ -124,6 +142,14 @@ func LoadConfig() (config *Config) {
 		ShippingProvider: ShippingProviderConfig{
 			ShippingProviderName: shippingProviderName,
 			ShippingProviderAPIKey: shippingProviderAPIKey,
+		},
+		PaymentProvider: PaymentProviderConfig{
+			PaymentProviderName: paymentProviderName,
+			PaymentProviderAPIKey: paymentProviderAPIKey,
+		},
+		EmailProvider: EmailConfig{
+			EmailServiceName: emailServiceName,
+			EmailAPIKey:      emailAPIKey,
 		},
 		AsianAccessoriesAPIKey: asianAccessoriesAPIKey,
 	}
