@@ -10,6 +10,7 @@ import (
 	"github.com/gotidy/ptr"
 	"github.com/peang/bukabengkel-api-go/src/models"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
+	"github.com/peang/bukabengkel-api-go/src/services/email_services"
 	"github.com/peang/bukabengkel-api-go/src/services/payment_services"
 	"github.com/peang/bukabengkel-api-go/src/services/shipping_services"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
@@ -35,6 +36,7 @@ type cartShoppingUsecase struct {
 	orderDistributorRepo *repository.OrderDistributorRepository
 	shippingService      shipping_services.ShippingService
 	paymentService       payment_services.PaymentService
+	emailService         email_services.EmailService
 }
 
 func NewCartShoppingUsecase(
@@ -45,6 +47,7 @@ func NewCartShoppingUsecase(
 	orderDistributorRepo *repository.OrderDistributorRepository,
 	shippingService shipping_services.ShippingService,
 	paymentService payment_services.PaymentService,
+	emailService email_services.EmailService,
 ) CartShoppingUsecase {
 	return &cartShoppingUsecase{
 		cartRepo:             cartRepo,
@@ -54,6 +57,7 @@ func NewCartShoppingUsecase(
 		orderDistributorRepo: orderDistributorRepo,
 		shippingService:      shippingService,
 		paymentService:       paymentService,
+		emailService:         emailService,
 	}
 }
 
@@ -250,12 +254,14 @@ func (u *cartShoppingUsecase) CartCheckout(ctx context.Context, dto *request.Car
 		return nil, err
 	}
 
+	expiredAt := time.Now().Add(time.Hour * 24)
 	orderDistributor.TransactionLogs = append(orderDistributor.TransactionLogs, models.OrderDistributorTransactionLog{
 		Status:    string(models.OrderDistributorStatusWaitingForPayment),
 		Timestamp: time.Now(),
 		Remarks:   "Payment URL: " + paymentUrl,
 	})
   orderDistributor.Status = models.OrderDistributorStatusWaitingForPayment
+	orderDistributor.ExpiredAt = ptr.Of(expiredAt)
 	orderDistributor.TransactionRemarks = paymentUrl
 
 	err = u.orderDistributorRepo.CreateOrderDistributor(ctx, orderDistributor)
@@ -263,7 +269,13 @@ func (u *cartShoppingUsecase) CartCheckout(ctx context.Context, dto *request.Car
 		return nil, err
 	}
 
-  // TODO: Uncomment this when we have a way to empty the cart
+	go u.emailService.SendWaitingForPaymentEmail(ctx, userStore.User.Email, email_services.WaitingForPaymentData{
+		StoreName: userStore.Store.Name,
+		ExpiredAt: expiredAt.Format("02 Jan 2006 15:04"),
+		PaymentURL: paymentUrl,
+	})
+
+  // TODO: Uncomment this 
 	// err = u.cartRepo.EmptyCartShopping(ctx, dto.StoreID, dto.UserID)
 	// if err != nil {
 	// 	return nil, err

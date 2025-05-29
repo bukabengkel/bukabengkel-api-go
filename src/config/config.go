@@ -109,8 +109,8 @@ func LoadConfig() (config *Config) {
 	paymentProviderName := os.Getenv("PAYMENT_PROVIDER")
 	paymentProviderAPIKey := os.Getenv("PAYMENT_PROVIDER_API_KEY")
 
-	emailServiceName := os.Getenv("EMAIL_SERVICE")
-	emailAPIKey := os.Getenv("EMAIL_API_KEY")
+	emailServiceName := os.Getenv("MAILER_PROVIDER")
+	emailAPIKey := os.Getenv("MAILER_PROVIDER_API_KEY")
 
 	asianAccessoriesAPIKey := os.Getenv("ASIAN_ACCESSORIES_API_KEY")
 

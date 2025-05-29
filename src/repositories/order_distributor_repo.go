@@ -55,6 +55,10 @@ func (r *OrderDistributorRepository) List(ctx context.Context, page int, perPage
 		"distributor_name",
 		"total",
 		"status",
+		"expired_at",
+		"paid_at",
+		"created_at",
+		"updated_at",
 	).Model(&orderDistributors)
 
 	query = r.queryBuilder(query, cond)

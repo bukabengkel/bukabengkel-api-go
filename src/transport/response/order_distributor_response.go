@@ -49,6 +49,8 @@ type orderDistributorListResponse struct {
 	DistributorName         string                         `json:"distributor_name"`
 	Total                   float64                        `json:"total"`
 	Status                  models.OrderDistributorStatus  `json:"status"`
+	ExpiredAt               *time.Time                     `json:"expired_at"`
+	PaidAt                  *time.Time                     `json:"paid_at"`
 	CreatedAt               time.Time                      `json:"created_at"`
 	UpdatedAt               time.Time                      `json:"updated_at"`
 }
@@ -66,6 +68,16 @@ func OrderDistributorDetailResponse(orderDistributor *models.OrderDistributor) *
 			Discount:     item.Discount,
 		})
 	}
+
+	transactionLogs := make([]orderDistributorTransactionLogResponse, 0)
+	for _, log := range orderDistributor.TransactionLogs {
+		transactionLogs = append(transactionLogs, orderDistributorTransactionLogResponse{
+			Status:    log.Status,
+			Timestamp: log.Timestamp,
+			Remarks:   log.Remarks,
+		})
+	}
+
 	response := &orderDistributorDetailResponse{
 		ID:                      orderDistributor.Key.String(),
 		DistributorName:         orderDistributor.DistributorName,
@@ -81,6 +93,7 @@ func OrderDistributorDetailResponse(orderDistributor *models.OrderDistributor) *
 		ExpiredAt:               orderDistributor.ExpiredAt,
 		PaidAt:                  orderDistributor.PaidAt,
 		Items:                   items,
+		TransactionLogs:         transactionLogs,
 		TransactionRemarks:      orderDistributor.TransactionRemarks,
 		Status:                  orderDistributor.Status,
 		CreatedAt:               orderDistributor.CreatedAt,
@@ -98,6 +111,8 @@ func OrderDistributorListResponse(orderDistributors *[]models.OrderDistributor) 
 			DistributorName:         product.DistributorName,
 			Total:                   product.Total,
 			Status:                  product.Status,
+			ExpiredAt:               product.ExpiredAt,
+			PaidAt:                  product.PaidAt,
 			CreatedAt:               product.CreatedAt,
 			UpdatedAt:               product.UpdatedAt,
 		}

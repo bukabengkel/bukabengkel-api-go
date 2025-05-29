@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 
@@ -16,12 +15,14 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
 	"github.com/peang/bukabengkel-api-go/src/services/cache_services"
+	"github.com/peang/bukabengkel-api-go/src/services/email_services"
 	"github.com/peang/bukabengkel-api-go/src/services/file_services"
 	"github.com/peang/bukabengkel-api-go/src/services/payment_services"
 	"github.com/peang/bukabengkel-api-go/src/services/shipping_services"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
 	orderDistributorUsecase "github.com/peang/bukabengkel-api-go/src/usecases/order_distributor.go"
+	webhookUsecase "github.com/peang/bukabengkel-api-go/src/usecases/webhook.go"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
 
 	"github.com/robfig/cron/v3"
@@ -57,6 +58,9 @@ func main() {
 	paymentService, err := payment_services.NewPaymentService(configApp)
 	utils.PanicIfNeeded(err)
 
+	emailService, err := email_services.NewEmailService(configApp, appLogger)
+	utils.PanicIfNeeded(err)
+
 	cacheService, err := cache_services.NewCacheService(configApp)
 	utils.PanicIfNeeded(err)
 
@@ -82,8 +86,9 @@ func main() {
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo, distributorRepo)
 	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
 	distributorUsecase := usecase.NewDistributorUsecase(distributorRepo)
-	cartUsecase := usecase.NewCartShoppingUsecase(cartRepo, distributorRepo, userStoreRepo, locationRepo, orderDistributorRepo, shippingService, paymentService)
+	cartUsecase := usecase.NewCartShoppingUsecase(cartRepo, distributorRepo, userStoreRepo, locationRepo, orderDistributorRepo, shippingService, paymentService, emailService)
 	orderDistributorUsecase := orderDistributorUsecase.NewOrderDistributorUsecase(orderDistributorRepo)
+	webhookUsecase := webhookUsecase.NewWebhookUsecase()
 
 	e := echo.New()
 	e.Use(middleware.CORSMiddleware())
@@ -91,25 +96,27 @@ func main() {
 
 	handlers.NewReportHandler(e, middleware, reportUsecase)
 	handlers.NewProductHandler(e, middleware, productUsecase)
+	handlers.NewProductHandlerV2(e, middleware, productUsecase)
 	handlers.NewProductDistributorHandler(e, middleware, productDistributorUsecase)
 	handlers.NewProductExportLogHandler(e, middleware, productExportLogUsecase)
 	handlers.NewDistributorHandler(e, middleware, distributorUsecase)
 	handlers.NewLocationHandler(e, middleware, configApp, shippingService)
 	handlers.NewCartShoppingHandler(e, middleware, cartUsecase)
 	handlers.NewOrderDistributorHandler(e, middleware, orderDistributorUsecase)
+	handlers.NewWebhookHandler(e, middleware, webhookUsecase)
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.JWTAuth())
 
 	c := cron.New()
 	_, err = c.AddFunc("0 0 * * *", func() {
-		fmt.Println("Executing Sync Asian Products")
+		appLogger.Info("Executing Sync Asian Products")
 		asian := cmd.NewSyncAsian(appLogger, productDistRepo, productCatDistRepo, imageRepo, fileService)
 
 		asian.Execute()
 	})
 	if err != nil {
-		log.Fatal("Fail to Register Cron")
+		appLogger.Error("Fail to Register Cron", "error", err)
 	}
 	c.Start()
 	defer c.Stop()

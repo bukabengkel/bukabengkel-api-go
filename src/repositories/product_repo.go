@@ -127,3 +127,66 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 
 	return &products, count, nil
 }
+
+func (r *ProductRepository) ListV2(ctx context.Context, page int, perPage int, sort string, filter ProductRepositoryFilter) (*[]models.Product, bool, error) {
+	sorts := utils.GenerateSort(sort)
+	offset, limit := utils.GenerateOffsetLimitV2(page, perPage)
+
+	var products []models.Product
+	var hasNext bool = false
+	
+	// Create a new query using the base components
+	sl := r.db.NewSelect().Model(&products)
+	
+	// Add relations
+	for _, relation := range r.statements.listRelations {
+		sl = sl.Relation(relation)
+	}
+	
+	sl = r.queryBuilder(sl, filter)
+
+	err := sl.
+		Limit(limit).
+		Offset(offset).
+		OrderExpr(sorts).
+		Scan(ctx)
+	
+	if err != nil {
+		return nil, false, err
+	}
+
+	if len(products) == 0 {
+		return &[]models.Product{}, false, nil
+	}
+
+	entityProductIds := make([]uint, 0, len(products))
+	for _, p := range products {
+		entityProductIds = append(entityProductIds, p.ID)
+	}
+
+	images, err := r.imageRepository.Find(ctx, 1, 50, "id", ImageRepositoryFilter{
+		EntityIDS:  ptr.Of(entityProductIds),
+		EntityType: utils.Uint(1),
+	})
+
+	if err == nil {
+		imageMap := make(map[uint][]models.Image)
+		for _, img := range images {
+			img.Path = r.imageRepository.fileService.BuildUrl(img.Path, 500, 500)
+			imageMap[img.EntityID] = append(imageMap[img.EntityID], img)
+		}
+
+		for i := range products {
+			if imgs, ok := imageMap[products[i].ID]; ok {
+				products[i].Images = imgs
+			}
+		}
+	}
+
+	if len(products) > perPage {
+		hasNext = true
+		products = products[:len(products)-1]
+	}
+
+	return &products, hasNext, nil
+}
