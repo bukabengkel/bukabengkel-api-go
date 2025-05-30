@@ -52,7 +52,7 @@ func (h *CartShoppingHandler) GetShippingRate(ctx echo.Context) error {
 
 	distributor, distributorLocation, cartItems, shippingCost, err := h.cartUsecase.CartShipping(ctx.Request().Context(), &dto)
 	if err != nil {
-		return ctx.JSON(http.StatusUnprocessableEntity, err)
+		return ctx.JSON(utils.ParseHttpError(err))
 	}
 
 	return utils.ResponseJSON(

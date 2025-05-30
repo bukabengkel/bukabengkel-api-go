@@ -55,7 +55,6 @@ func (s *RajaOngkirService) GetLocation(search string) (any, error) {
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://rajaongkir.komerce.id/api/v1/destination/domestic-destination?search=%s", search), nil)
 	req.Header.Set("key", s.APIKey)
-
 	if err != nil {
 		return nil, err
 	}

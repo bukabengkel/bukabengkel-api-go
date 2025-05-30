@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"time"
 
@@ -18,9 +17,9 @@ import (
 )
 
 type CheckoutResponse struct {
-	OrderID          string
-  OrderAmount      float64
-	PaymentURL       string
+	OrderID     string
+	OrderAmount float64
+	PaymentURL  string
 }
 
 type CartShoppingUsecase interface {
@@ -74,14 +73,11 @@ func (u *cartShoppingUsecase) CartShipping(ctx context.Context, dto *request.Car
 		return nil, nil, nil, nil, err
 	}
 
-  fmt.Println(dto.UserID)
-  fmt.Println(dto.StoreID)
 	userStore, err := u.userStoreRepo.FindOne(ctx, repository.UserStoreAggregateRepositoryFilter{
 		UserID:  &dto.UserID,
 		StoreID: &dto.StoreID,
 	})
 
-  fmt.Println(err)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -93,6 +89,9 @@ func (u *cartShoppingUsecase) CartShipping(ctx context.Context, dto *request.Car
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
+	if distributorLocation == nil {
+		return nil, nil, nil, nil, utils.NewUnprocessableEntityError("Distributor Locaton Not Set")
+	}
 
 	storeLocation, err := u.locationRepo.FindOne(ctx, repository.LocationRepositoryFilter{
 		EntityID:   userStore.Store.ID,
@@ -100,6 +99,9 @@ func (u *cartShoppingUsecase) CartShipping(ctx context.Context, dto *request.Car
 	})
 	if err != nil {
 		return nil, nil, nil, nil, err
+	}
+	if storeLocation == nil {
+		return nil, nil, nil, nil, utils.NewUnprocessableEntityError("Store Locaton Not Set")
 	}
 
 	distributorCartItems := make([]models.CartShopping, 0)
@@ -247,8 +249,8 @@ func (u *cartShoppingUsecase) CartCheckout(ctx context.Context, dto *request.Car
 		CustomerEmail: userStore.User.Email,
 		CustomerPhone: userStore.User.Mobile,
 	}, payment_services.PaymentOrderDetail{
-		OrderID: orderDistributor.Key.String(),
-    OrderAmount: orderDistributor.Total,
+		OrderID:     orderDistributor.Key.String(),
+		OrderAmount: orderDistributor.Total,
 	})
 	if err != nil {
 		return nil, err
@@ -260,7 +262,7 @@ func (u *cartShoppingUsecase) CartCheckout(ctx context.Context, dto *request.Car
 		Timestamp: time.Now(),
 		Remarks:   "Payment URL: " + paymentUrl,
 	})
-  orderDistributor.Status = models.OrderDistributorStatusWaitingForPayment
+	orderDistributor.Status = models.OrderDistributorStatusWaitingForPayment
 	orderDistributor.ExpiredAt = ptr.Of(expiredAt)
 	orderDistributor.TransactionRemarks = paymentUrl
 
@@ -270,20 +272,20 @@ func (u *cartShoppingUsecase) CartCheckout(ctx context.Context, dto *request.Car
 	}
 
 	go u.emailService.SendWaitingForPaymentEmail(ctx, userStore.User.Email, email_services.WaitingForPaymentData{
-		StoreName: userStore.Store.Name,
-		ExpiredAt: expiredAt.Format("02 Jan 2006 15:04"),
+		StoreName:  userStore.Store.Name,
+		ExpiredAt:  expiredAt.Format("02 Jan 2006 15:04"),
 		PaymentURL: paymentUrl,
 	})
 
-  // TODO: Uncomment this 
+	// TODO: Uncomment this
 	// err = u.cartRepo.EmptyCartShopping(ctx, dto.StoreID, dto.UserID)
 	// if err != nil {
 	// 	return nil, err
 	// }
 
 	return &CheckoutResponse{
-		OrderID:          orderDistributor.Key.String(),
-		OrderAmount:      orderDistributor.Total,
-		PaymentURL:       paymentUrl,
+		OrderID:     orderDistributor.Key.String(),
+		OrderAmount: orderDistributor.Total,
+		PaymentURL:  paymentUrl,
 	}, nil
 }

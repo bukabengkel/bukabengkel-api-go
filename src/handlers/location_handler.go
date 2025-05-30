@@ -12,7 +12,7 @@ import (
 )
 
 type LocationHandler struct {
-	config *config.Config
+	config          *config.Config
 	shippingService shipping_services.ShippingService
 }
 
@@ -23,7 +23,7 @@ func NewLocationHandler(
 	shippingService shipping_services.ShippingService,
 ) {
 	handler := &LocationHandler{
-		config: c,
+		config:          c,
 		shippingService: shippingService,
 	}
 
@@ -34,12 +34,18 @@ func NewLocationHandler(
 func (h *LocationHandler) GetLocations(ctx echo.Context) error {
 	search := ctx.QueryParam("search")
 	searchLabel := ctx.QueryParam("search[label]")
-  if searchLabel != "" {
-    search = searchLabel
-  }
+	if searchLabel != "" {
+		search = searchLabel
+	}
 
 	if search == "" {
-		return ctx.JSON(http.StatusBadRequest, "Search or Label is required")
+		return utils.ResponseJSON(
+			ctx,
+			http.StatusBadRequest,
+			"Search or Label is required",
+			nil,
+			nil,
+		)
 	}
 
 	location, err := h.shippingService.GetLocation(search)
