@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/peang/bukabengkel-api-go/src/models"
@@ -32,7 +33,7 @@ func (r *OrderDistributorRepository) queryBuilder(query *bun.SelectQuery, cond O
 	}
 
 	if cond.StoreID != nil {
-		query.Where("? = ?", bun.Ident("order_distributor.customer_id"), *cond.StoreID)
+		query.Where("? = ?", bun.Ident("order_distributor.store_id"), *cond.StoreID)
 	}
 
 	if cond.StartDate != nil && cond.EndDate != nil {
@@ -49,17 +50,22 @@ func (r *OrderDistributorRepository) List(ctx context.Context, page int, perPage
 	var hasNext bool = false
 	var orderDistributors []models.OrderDistributor
 
-	query := r.db.NewSelect().Column(
-		"id",
-		"key",
-		"distributor_name",
-		"total",
-		"status",
-		"expired_at",
-		"paid_at",
-		"created_at",
-		"updated_at",
-	).Model(&orderDistributors)
+	query := r.db.NewSelect().
+		Column(
+			"id",
+			"key",
+			"distributor_id",
+			"total",
+			"status",
+			"expired_at",
+			"paid_at",
+			"created_at",
+			"updated_at",
+		).
+		Model(&orderDistributors).
+		Relation("Distributor", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.JoinOn("distributor.id = order_distributor.distributor_id")
+		})
 
 	query = r.queryBuilder(query, cond)
 
@@ -81,12 +87,23 @@ func (r *OrderDistributorRepository) List(ctx context.Context, page int, perPage
 }
 
 func (r *OrderDistributorRepository) FindOne(ctx context.Context, cond OrderDistributorRepositoryFilter) (*models.OrderDistributor, error) {
-	query := r.db.NewSelect().Model(&models.OrderDistributor{})
+	var orderDistributor models.OrderDistributor
+
+	query := r.db.NewSelect().Model(&orderDistributor).
+		Relation("Distributor", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.JoinOn("distributor.id = order_distributor.distributor_id")
+		}).
+		Relation("Store", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.JoinOn("store.id = order_distributor.store_id")
+		})
+
 	query = r.queryBuilder(query, cond)
 
-	var orderDistributor models.OrderDistributor
 	err := query.Scan(ctx, &orderDistributor)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 

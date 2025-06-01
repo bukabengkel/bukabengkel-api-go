@@ -26,11 +26,11 @@ func NewCartRepository(memoryDB *redis.Client) *CartRepository {
 	}
 }
 
-func (r *CartRepository) getCartKey(storeID uint64, userID uint64) string {
+func (r *CartRepository) getCartKey(storeID uint, userID uint) string {
 	return fmt.Sprintf("cart_store_%d_%d_%d", storeID, userID, models.CartTypeShop)
 }
 
-func (r *CartRepository) GetCartShopping(ctx context.Context, storeID uint64, userID uint64) (*models.Cart, error) {
+func (r *CartRepository) GetCartShopping(ctx context.Context, storeID uint, userID uint) (*models.Cart, error) {
 	cartKey := r.getCartKey(storeID, userID)
 
 	len, err := r.memoryDB.LLen(ctx, cartKey).Result()
@@ -44,7 +44,7 @@ func (r *CartRepository) GetCartShopping(ctx context.Context, storeID uint64, us
 	}
 
 	cart := &models.Cart{
-		ID:                 &storeID,
+		ID:                 ptr.Of(uint64(storeID)),
 		StoreID:            storeID,
 		Items:              make([]models.CartShopping, 0),
 		TotalCartSellPrice: 0,
@@ -65,7 +65,7 @@ func (r *CartRepository) GetCartShopping(ctx context.Context, storeID uint64, us
 	return cart, nil
 }
 
-func (r *CartRepository) EmptyCartShopping(ctx context.Context, storeID uint64, userID uint64) error {
+func (r *CartRepository) EmptyCartShopping(ctx context.Context, storeID uint, userID uint) error {
 	cartKey := r.getCartKey(storeID, userID)
 
 	_, err := r.memoryDB.Del(ctx, cartKey).Result()

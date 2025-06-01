@@ -12,8 +12,8 @@ type UserStoreAggregateRepository struct {
 }
 
 type UserStoreAggregateRepositoryFilter struct {
-	UserID  *uint64
-	StoreID *uint64
+	UserID  *uint
+	StoreID *uint
 }
 
 func NewUserStoreAggregateRepository(db *bun.DB) *UserStoreAggregateRepository {
@@ -46,4 +46,3 @@ func (r *UserStoreAggregateRepository) FindOne(ctx context.Context, cond UserSto
 
 	return &userStore, nil
 }
-

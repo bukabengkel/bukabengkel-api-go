@@ -25,7 +25,7 @@ type CartShopping struct {
 	ID              *uint64
 	DistributorKey  string
 	DistributorName string
-	ProductKey     string
+	ProductKey      string
 	ProductName     string
 	ProductUnit     string
 	ProductImage    string
@@ -43,7 +43,7 @@ type CartShopping struct {
 
 type Cart struct {
 	ID                 *uint64
-	StoreID            uint64
+	StoreID            uint
 	Items              []CartShopping
 	TotalCartSellPrice float64
 	TotalCartDiscount  float64

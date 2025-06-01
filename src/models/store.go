@@ -17,7 +17,7 @@ type Store struct {
 	ID             *uint64     `bun:"id,pk"`
 	Key            string      `bun:"key,notnull,unique"`
 	Name           string      `bun:"name,notnull"`
-	Type           uint        `bun:"type,notnull"`
+	Type           uint8       `bun:"type,notnull"`
 	LocationDetail string      `bun:"location_detail"`
 	Geolocation    Geolocation `bun:"geolocation"`
 	CreatedAt      time.Time   `bun:"created_at"`

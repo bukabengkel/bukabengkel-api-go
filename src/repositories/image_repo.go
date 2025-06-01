@@ -15,9 +15,9 @@ type ImageRepository struct {
 }
 
 type ImageRepositoryFilter struct {
-	EntityID   *uint
-	EntityIDS  *[]uint
-	EntityType *uint
+	EntityID   *uint64
+	EntityIDS  *[]uint64
+	EntityType *uint64
 }
 
 func NewImageRepository(db *bun.DB, fileService file_service.FileService) *ImageRepository {

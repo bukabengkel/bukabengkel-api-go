@@ -10,7 +10,7 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
 	"github.com/peang/bukabengkel-api-go/src/transport/response"
-	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
+	usecase "github.com/peang/bukabengkel-api-go/src/usecases/cart_shopping"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 )
 
@@ -45,8 +45,8 @@ func (h *CartShoppingHandler) GetShippingRate(ctx echo.Context) error {
 	}
 
 	dto := request.CartShoppingGetShippingRateDTO{
-		StoreID:       uint64(storeId),
-		UserID:        uint64(userId),
+		StoreID:       uint(storeId),
+		UserID:        uint(userId),
 		DistributorID: distributorId,
 	}
 
@@ -94,8 +94,8 @@ func (h *CartShoppingHandler) Checkout(c echo.Context) error {
 		return c.JSON(utils.ParseHttpError(errors.New("user_id is required")))
 	}
 
-	dto.StoreID = uint64(storeId)
-	dto.UserID = uint64(userId)
+	dto.StoreID = uint(storeId)
+	dto.UserID = uint(userId)
 	dto.DistributorID = distributorId
 
 	checkoutResponse, err := h.cartUsecase.CartCheckout(c.Request().Context(), &dto)

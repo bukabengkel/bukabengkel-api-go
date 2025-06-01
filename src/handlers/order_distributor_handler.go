@@ -8,7 +8,7 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
 	"github.com/peang/bukabengkel-api-go/src/transport/response"
-	usecase "github.com/peang/bukabengkel-api-go/src/usecases/order_distributor.go"
+	usecase "github.com/peang/bukabengkel-api-go/src/usecases/order_distributor"
 	"github.com/peang/bukabengkel-api-go/src/utils"
 )
 
@@ -66,7 +66,7 @@ func (h *OrderDistributorHandler) Detail(ctx echo.Context) (err error) {
 
 	dto := request.OrderDistributorDetailDTO{
 		StoreID: uint(storeId),
-		OrderID: ctx.Param("key"),
+		OrderID: ctx.Param("id"),
 	}
 
 	orderDistributor, err := h.usecase.Detail(ctx.Request().Context(), dto)

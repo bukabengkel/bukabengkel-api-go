@@ -37,7 +37,7 @@ type User struct {
 	IsEmailVerified        bool      `bun:"is_email_verified"`
 	Mobile                 string    `bun:"mobile"`
 	IsMobileVerified       bool      `bun:"is_mobile_verified"`
-	Status                 uint64    `bun:"status"`
+	Status                 uint8     `bun:"status"`
 	RefreshToken           string    `bun:"refresh_token"`
 	RefreshTokenValidUntil time.Time `bun:"refresh_token_valid_until"`
 	ResetToken             string    `bun:"reset_token"`

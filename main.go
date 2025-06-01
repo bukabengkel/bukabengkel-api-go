@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -15,15 +16,19 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
 	"github.com/peang/bukabengkel-api-go/src/services/cache_services"
+	distributor_services "github.com/peang/bukabengkel-api-go/src/services/distributor_services"
 	"github.com/peang/bukabengkel-api-go/src/services/email_services"
 	"github.com/peang/bukabengkel-api-go/src/services/file_services"
 	"github.com/peang/bukabengkel-api-go/src/services/payment_services"
 	"github.com/peang/bukabengkel-api-go/src/services/shipping_services"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
-	orderDistributorUsecase "github.com/peang/bukabengkel-api-go/src/usecases/order_distributor.go"
-	webhookUsecase "github.com/peang/bukabengkel-api-go/src/usecases/webhook.go"
+	cartShoppingUsecase "github.com/peang/bukabengkel-api-go/src/usecases/cart_shopping"
+	orderDistributorUsecase "github.com/peang/bukabengkel-api-go/src/usecases/order_distributor"
+	webhookUsecase "github.com/peang/bukabengkel-api-go/src/usecases/webhook"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
+
+	server "github.com/restatedev/sdk-go/server"
 
 	"github.com/robfig/cron/v3"
 )
@@ -64,6 +69,8 @@ func main() {
 	cacheService, err := cache_services.NewCacheService(configApp)
 	utils.PanicIfNeeded(err)
 
+	distributorService := distributor_services.NewAsianAccessoriesService(configApp)
+
 	middleware := middleware.NewMiddleware(enfocer, appLogger, jwtService)
 
 	// Repositories
@@ -86,9 +93,9 @@ func main() {
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo, distributorRepo)
 	productExportLogUsecase := usecase.NewProductExportLogUsecase(productExportLogRepo)
 	distributorUsecase := usecase.NewDistributorUsecase(distributorRepo)
-	cartUsecase := usecase.NewCartShoppingUsecase(cartRepo, distributorRepo, userStoreRepo, locationRepo, orderDistributorRepo, shippingService, paymentService, emailService)
+	cartUsecase := cartShoppingUsecase.NewCartShoppingUsecase(cartRepo, distributorRepo, userStoreRepo, locationRepo, orderDistributorRepo, shippingService, paymentService, emailService)
 	orderDistributorUsecase := orderDistributorUsecase.NewOrderDistributorUsecase(orderDistributorRepo)
-	webhookUsecase := webhookUsecase.NewWebhookUsecase()
+	webhookUsecase := webhookUsecase.NewWebhookUsecase(appLogger, orderDistributorRepo, userStoreRepo, emailService, *distributorService)
 
 	e := echo.New()
 	e.Use(middleware.CORSMiddleware())
@@ -120,6 +127,12 @@ func main() {
 	}
 	c.Start()
 	defer c.Stop()
+
+	go func() {
+		restateServer := server.NewRestate()
+		// restateServer.Bind(restate.Reflect(MyService{}))
+		restateServer.Start(context.Background(), fmt.Sprintf(":%s", "9080"))
+	}()
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", configApp.Port)))
 

@@ -11,7 +11,7 @@ import (
 
 func (u *orderDistributorUsecase) Detail(ctx context.Context, dto request.OrderDistributorDetailDTO) (*models.OrderDistributor, error) {
 	filter := repository.OrderDistributorRepositoryFilter{
-		StoreID: &dto.StoreID,
+		Key: &dto.OrderID,
 	}
 
 	orderDistributor, err := u.orderDistributorRepository.FindOne(ctx, filter)
@@ -21,4 +21,3 @@ func (u *orderDistributorUsecase) Detail(ctx context.Context, dto request.OrderD
 
 	return orderDistributor, nil
 }
-

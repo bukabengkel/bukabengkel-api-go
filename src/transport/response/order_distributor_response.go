@@ -45,14 +45,14 @@ type orderDistributorDetailResponse struct {
 }
 
 type orderDistributorListResponse struct {
-	ID                      string                         `json:"id"`
-	DistributorName         string                         `json:"distributor_name"`
-	Total                   float64                        `json:"total"`
-	Status                  models.OrderDistributorStatus  `json:"status"`
-	ExpiredAt               *time.Time                     `json:"expired_at"`
-	PaidAt                  *time.Time                     `json:"paid_at"`
-	CreatedAt               time.Time                      `json:"created_at"`
-	UpdatedAt               time.Time                      `json:"updated_at"`
+	ID              string                        `json:"id"`
+	DistributorName string                        `json:"distributor_name"`
+	Total           float64                       `json:"total"`
+	Status          models.OrderDistributorStatus `json:"status"`
+	ExpiredAt       *time.Time                    `json:"expired_at"`
+	PaidAt          *time.Time                    `json:"paid_at"`
+	CreatedAt       time.Time                     `json:"created_at"`
+	UpdatedAt       time.Time                     `json:"updated_at"`
 }
 
 func OrderDistributorDetailResponse(orderDistributor *models.OrderDistributor) *orderDistributorDetailResponse {
@@ -80,7 +80,7 @@ func OrderDistributorDetailResponse(orderDistributor *models.OrderDistributor) *
 
 	response := &orderDistributorDetailResponse{
 		ID:                      orderDistributor.Key.String(),
-		DistributorName:         orderDistributor.DistributorName,
+		DistributorName:         orderDistributor.Distributor.Name,
 		ShippingProvider:        orderDistributor.ShippingProvider,
 		ShippingProviderService: orderDistributor.ShippingProviderService,
 		ShippingProviderRemarks: orderDistributor.ShippingProviderRemarks,
@@ -107,14 +107,14 @@ func OrderDistributorListResponse(orderDistributors *[]models.OrderDistributor) 
 	var responses = make([]orderDistributorListResponse, 0)
 	for _, product := range *orderDistributors {
 		response := orderDistributorListResponse{
-			ID:                      product.Key.String(),
-			DistributorName:         product.DistributorName,
-			Total:                   product.Total,
-			Status:                  product.Status,
-			ExpiredAt:               product.ExpiredAt,
-			PaidAt:                  product.PaidAt,
-			CreatedAt:               product.CreatedAt,
-			UpdatedAt:               product.UpdatedAt,
+			ID:              product.Key.String(),
+			DistributorName: product.Distributor.Name,
+			Total:           product.Total,
+			Status:          product.Status,
+			ExpiredAt:       product.ExpiredAt,
+			PaidAt:          product.PaidAt,
+			CreatedAt:       product.CreatedAt,
+			UpdatedAt:       product.UpdatedAt,
 		}
 		responses = append(responses, response)
 	}

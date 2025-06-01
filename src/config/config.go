@@ -9,21 +9,22 @@ import (
 
 // Config ...
 type Config struct {
-	Env                  string
-	Port                 string
-	BaseURL              string
-	DatabaseURL          string
-	LoggerLevel          string
-	ContextTimeout       int
-	JWTSecretKey         string
-	CasbinModelFilePath  string
-	CasbinPolicyFilePath string
-	Storage              StorageConfig
-	Cache                CacheConfig
-	ShippingProvider     ShippingProviderConfig
-	PaymentProvider      PaymentProviderConfig
-	EmailProvider        EmailConfig
-	AsianAccessoriesAPIKey string
+	Env                         string
+	Port                        string
+	BaseURL                     string
+	DatabaseURL                 string
+	LoggerLevel                 string
+	ContextTimeout              int
+	JWTSecretKey                string
+	CasbinModelFilePath         string
+	CasbinPolicyFilePath        string
+	Storage                     StorageConfig
+	Cache                       CacheConfig
+	ShippingProvider            ShippingProviderConfig
+	PaymentProvider             PaymentProviderConfig
+	EmailProvider               EmailConfig
+	AsianAccessoriesAPIKey      string
+	AsianAccessoriesCheckoutURL string
 }
 
 type StorageConfig struct {
@@ -44,12 +45,12 @@ type CacheConfig struct {
 }
 
 type ShippingProviderConfig struct {
-	ShippingProviderName string
+	ShippingProviderName   string
 	ShippingProviderAPIKey string
 }
 
 type PaymentProviderConfig struct {
-	PaymentProviderName string
+	PaymentProviderName   string
 	PaymentProviderAPIKey string
 }
 
@@ -113,6 +114,7 @@ func LoadConfig() (config *Config) {
 	emailAPIKey := os.Getenv("MAILER_PROVIDER_API_KEY")
 
 	asianAccessoriesAPIKey := os.Getenv("ASIAN_ACCESSORIES_API_KEY")
+	asianAccessoriesCheckoutURL := os.Getenv("ASIAN_ACCESSORIES_CHECKOUT_URL")
 
 	return &Config{
 		Env:                  env,
@@ -140,17 +142,18 @@ func LoadConfig() (config *Config) {
 			CachePort:        cachePort,
 		},
 		ShippingProvider: ShippingProviderConfig{
-			ShippingProviderName: shippingProviderName,
+			ShippingProviderName:   shippingProviderName,
 			ShippingProviderAPIKey: shippingProviderAPIKey,
 		},
 		PaymentProvider: PaymentProviderConfig{
-			PaymentProviderName: paymentProviderName,
+			PaymentProviderName:   paymentProviderName,
 			PaymentProviderAPIKey: paymentProviderAPIKey,
 		},
 		EmailProvider: EmailConfig{
 			EmailServiceName: emailServiceName,
 			EmailAPIKey:      emailAPIKey,
 		},
-		AsianAccessoriesAPIKey: asianAccessoriesAPIKey,
+		AsianAccessoriesAPIKey:      asianAccessoriesAPIKey,
+		AsianAccessoriesCheckoutURL: asianAccessoriesCheckoutURL,
 	}
 }

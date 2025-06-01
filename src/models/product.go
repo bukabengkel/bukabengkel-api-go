@@ -27,7 +27,7 @@ func (s ProductStatus) String() string {
 type Product struct {
 	bun.BaseModel `bun:"table:product"`
 
-	ID               uint          `bun:"id,pk,nullzero"`
+	ID               uint64        `bun:"id,pk,nullzero"`
 	Key              string        `bun:"key,notnull,unique"`
 	StoreID          uint64        `bun:"store_id,notnull"`
 	CategoryID       uint64        `bun:"category_id,notnull"`
