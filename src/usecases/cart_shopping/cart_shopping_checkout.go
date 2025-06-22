@@ -38,15 +38,15 @@ func (u *cartShoppingUsecase) CartCheckout(ctx context.Context, dto *request.Car
 	}
 
 	if !userStore.User.IsMobileVerified {
-		return nil, utils.NewUnprocessableEntityError("User mobile number is not verified")
+		return nil, utils.NewUnprocessableEntityError("Mobile number must be verified first for checkout")
 	}
 
 	if !userStore.User.IsEmailVerified {
-		return nil, utils.NewUnprocessableEntityError("User email is not verified")
+		return nil, utils.NewUnprocessableEntityError("Email must be verified first for checkout")
 	}
 
 	if userStore.Store.LocationDetail == "" {
-		return nil, utils.NewUnprocessableEntityError("Store location detail is not set")
+		return nil, utils.NewUnprocessableEntityError("Store location must be set first for checkout")
 	}
 
 	distributorCartItems := make([]models.OrderDistributorItem, 0)
