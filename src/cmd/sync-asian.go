@@ -183,7 +183,7 @@ func (s *SyncAsian) getCategory(
 	ch chan<- CategoryResponseData,
 	chErr chan<- error,
 ) {
-	resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/list/%v", cat), "GET", 5)
+	resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/list/%v", cat), 10)
 	if err != nil {
 		chErr <- fmt.Errorf("failed_to_fetch %v", err)
 		return
@@ -265,7 +265,7 @@ func (s *SyncAsian) getProduct(
 	for hasResult {
 		var errorCountPerPage uint
 
-		resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/product/%v?page=%v&per_page=200&sort=Terbaru", cat, page), "GET", 5)
+		resp, err := utils.HttpGetWithRetry(fmt.Sprintf("https://api-mobile.asian-accessory.com/category/product/%v?page=%v&per_page=200&sort=Terbaru", cat, page), 10)
 		if err != nil {
 			errNew := fmt.Errorf("failed_to_fetch %v", err)
 			chErr <- errNew

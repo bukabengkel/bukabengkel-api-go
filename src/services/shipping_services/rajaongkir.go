@@ -24,6 +24,24 @@ type ShippingCostRequest struct {
 	Weight      int    `json:"weight"`
 }
 
+type ShippingResponse struct {
+	Meta struct {
+		Message string `json:"message"`
+		Code    int    `json:"code"`
+		Status  string `json:"status"`
+	} `json:"meta"`
+	Data []ShippingOption `json:"data"`
+}
+
+type ShippingOption struct {
+	Name        string `json:"name"`
+	Code        string `json:"code"`
+	Service     string `json:"service"`
+	Description string `json:"description"`
+	Cost        int    `json:"cost"`
+	ETD         string `json:"etd"`
+}
+
 func NewRajaOngkirService(config *config.Config) *RajaOngkirService {
 	return &RajaOngkirService{
 		APIKey: config.ShippingProvider.ShippingProviderAPIKey,
@@ -37,7 +55,6 @@ func (s *RajaOngkirService) GetLocation(search string) (any, error) {
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://rajaongkir.komerce.id/api/v1/destination/domestic-destination?search=%s", search), nil)
 	req.Header.Set("key", s.APIKey)
-
 	if err != nil {
 		return nil, err
 	}
@@ -98,10 +115,10 @@ func (s *RajaOngkirService) CalculateShipping(data any) (any, error) {
 		return nil, err
 	}
 
-	var shippingCostResponse response.RajaOngkirGetShippingRateResponse
+	var shippingCostResponse ShippingResponse
 	if err := json.Unmarshal(body, &shippingCostResponse); err != nil {
 		return nil, err
 	}
 
-	return shippingCostResponse.Data, nil
+	return shippingCostResponse, nil
 }

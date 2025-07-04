@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/peang/bukabengkel-api-go/src/models"
 	"github.com/uptrace/bun"
@@ -14,6 +15,8 @@ type StoreRepository struct {
 type StoreRepositoryFilter struct {
 	ID  *uint64
 	Key *string
+	StartDate *time.Time
+	EndDate *time.Time
 }
 
 func NewStoreRepository(db *bun.DB) *StoreRepository {
@@ -29,6 +32,10 @@ func (r *StoreRepository) queryBuilder(query *bun.SelectQuery, cond StoreReposit
 
 	if cond.Key != nil {
 		query.Where("? = ?", bun.Ident("store.key"), *cond.Key)
+	}
+
+	if cond.StartDate != nil && cond.EndDate != nil {
+		query.Where("? BETWEEN ? AND ?", bun.Ident("store.created_at"), cond.StartDate, cond.EndDate)
 	}
 
 	return query
@@ -47,3 +54,14 @@ func (r *StoreRepository) FindOne(ctx context.Context, cond StoreRepositoryFilte
 	return &store, nil
 }
 
+func (r *StoreRepository) Count(ctx context.Context, filter StoreRepositoryFilter) (int, error) {
+	sl := r.db.NewSelect().Table("store")
+	sl = r.queryBuilder(sl, filter)
+
+	count, err := sl.Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

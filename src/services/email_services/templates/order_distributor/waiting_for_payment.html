@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menunggu Pembayaran - BukaBengkel</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #fafbfc;
+      font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+
+    .header {
+      padding: 20px;
+      text-align: center;
+      background-color: #fafbfc;
+    }
+
+    .logo {
+      max-width: 200px;
+      height: auto;
+    }
+
+    .divider {
+      height: 2px;
+      background-color: #F45E43;
+      margin: 0;
+    }
+
+    .content {
+      padding: 20px 25px;
+      background-color: #ffffff;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333333;
+    }
+
+    .message {
+      font-size: 16px;
+      text-align: center;
+      margin-bottom: 15px;
+      line-height: 1.5;
+      color: #555555;
+    }
+
+    .button {
+      display: block;
+      width: 200px;
+      margin: 30px auto;
+      padding: 15px 20px;
+      background-color: #F45E43;
+      color: #ffffff;
+      text-decoration: none;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .button:hover {
+      background-color: #d54a2f;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 16px;
+      color: #555555;
+    }
+
+    .team-name {
+      font-weight: bold;
+      color: #F45E43;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://ik.imagekit.io/bkbkl/assets/bukabengkel_logo_text.png" alt="BukaBengkel Logo" class="logo">
+    </div>
+
+    <hr class="divider">
+
+    <div class="content">
+      <h1 class="title">Menunggu Pembayaran 💳</h1>
+
+      <p class="message">
+        Halo {{.StoreName}}, Pesanan Anda telah berhasil dibuat dan sedang menunggu pembayaran.
+      </p>
+
+      <p class="message">
+        Silakan lakukan pembayaran sebelum {{.ExpiredAt}} untuk melanjutkan proses pesanan.
+      </p>
+
+      <a href="{{.PaymentURL}}" class="button">Bayar Sekarang</a>
+
+      <div class="footer">
+        Terima kasih!<br><br>
+        <span class="team-name">BukaBengkel Team</span>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

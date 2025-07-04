@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
+	"unicode"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -38,14 +38,14 @@ var (
 type HttpErr interface {
 	Status() int
 	Error() string
-	Details() interface{}
+	Details() any
 }
 
 // HttpError struct
 type HttpError struct {
 	ErrStatus  int         `json:"status"`
 	ErrError   string      `json:"error"`
-	ErrDetails interface{} `json:"details"`
+	ErrDetails any `json:"details"`
 }
 
 // Error  Error() interface method
@@ -59,12 +59,12 @@ func (e HttpError) Status() int {
 }
 
 // HttpError Details
-func (e HttpError) Details() interface{} {
+func (e HttpError) Details() any {
 	return e.ErrDetails
 }
 
 // New Http Error
-func NewHttpError(status int, err string, details interface{}) HttpErr {
+func NewHttpError(status int, err string, details any) HttpErr {
 	return HttpError{
 		ErrStatus:  status,
 		ErrError:   err,
@@ -73,7 +73,7 @@ func NewHttpError(status int, err string, details interface{}) HttpErr {
 }
 
 // New Authentication Failed Error
-func NewAuthenticationFailedError(details interface{}) HttpErr {
+func NewAuthenticationFailedError(details any) HttpErr {
 	return HttpError{
 		ErrStatus:  401,
 		ErrError:   ErrAuthenticationFailed.Error(),
@@ -82,7 +82,7 @@ func NewAuthenticationFailedError(details interface{}) HttpErr {
 }
 
 // New Bad Request Error
-func NewBadRequestError(details interface{}) HttpErr {
+func NewBadRequestError(details any) HttpErr {
 	return HttpError{
 		ErrStatus:  http.StatusBadRequest,
 		ErrError:   ErrBadRequest.Error(),
@@ -91,7 +91,7 @@ func NewBadRequestError(details interface{}) HttpErr {
 }
 
 // New Not Found Error
-func NewNotFoundError(details interface{}) HttpErr {
+func NewNotFoundError(details any) HttpErr {
 	return HttpError{
 		ErrStatus:  http.StatusNotFound,
 		ErrError:   ErrNotFound.Error(),
@@ -100,7 +100,7 @@ func NewNotFoundError(details interface{}) HttpErr {
 }
 
 // New Unauthorized Error
-func NewUnauthorizedError(details interface{}) HttpErr {
+func NewUnauthorizedError(details any) HttpErr {
 	return HttpError{
 		ErrStatus:  http.StatusUnauthorized,
 		ErrError:   ErrUnauthorized.Error(),
@@ -109,7 +109,7 @@ func NewUnauthorizedError(details interface{}) HttpErr {
 }
 
 // New Forbidden Error
-func NewForbiddenError(details interface{}) HttpErr {
+func NewForbiddenError(details any) HttpErr {
 	return HttpError{
 		ErrStatus:  http.StatusForbidden,
 		ErrError:   ErrForbidden.Error(),
@@ -118,18 +118,18 @@ func NewForbiddenError(details interface{}) HttpErr {
 }
 
 // New Internal Server Error
-func NewInternalServerError(details interface{}) HttpErr {
-	log.Error(details.(error).Error())
+func NewInternalServerError(err error) HttpErr {
+	log.Error(err.Error())
 
 	return HttpError{
 		ErrStatus:  http.StatusInternalServerError,
 		ErrError:   ErrInternalServerError.Error(),
-		ErrDetails: nil,
+		ErrDetails: err,
 	}
 }
 
 // New Internal Server Error
-func NewDomainError(details interface{}) HttpErr {
+func NewDomainError(details any) HttpErr {
 	log.Error(details.(error).Error())
 
 	return HttpError{
@@ -140,7 +140,7 @@ func NewDomainError(details interface{}) HttpErr {
 }
 
 // New Unprocessable Entity Error
-func NewUnprocessableEntityError(details interface{}) HttpErr {
+func NewUnprocessableEntityError(details any) HttpErr {
 	return HttpError{
 		ErrStatus:  http.StatusUnprocessableEntity,
 		ErrError:   ErrUnprocessableEntity.Error(),
@@ -149,12 +149,14 @@ func NewUnprocessableEntityError(details interface{}) HttpErr {
 }
 
 // New Invalid Input Error - Validation
-func NewValidationError(c echo.Context, e validator.ValidationErrors) error {
+func NewHTTPValidationError(c echo.Context, e validator.ValidationErrors) error {
 	errorMessages := make(map[string]string)
 
 	for _, err := range e {
-		fieldName := strings.ToLower(err.StructField())
-		errorMessages[fieldName] = fmt.Sprintf("Field validation for '%s' failed on the '%s' tag", err.StructField(), err.Tag())
+		// Base Assumption the json tag always in snake case and represent the field name
+		fieldName := toSnakeCase(err.StructField())
+
+		errorMessages[fieldName] = fmt.Sprintf("Failed on the '%s' tag", err.Tag())
 	}
 
 	return c.JSON(http.StatusBadRequest, Error{
@@ -173,8 +175,19 @@ func ParseHttpError(err error) (int, HttpErr) {
 }
 
 // PanicIfNeeded is panic if needed
-func PanicIfNeeded(err interface{}) {
+func PanicIfNeeded(err any) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func toSnakeCase(s string) string {
+	var result string
+	for i, r := range s {
+			if i > 0 && unicode.IsUpper(r) {
+					result += "_"
+			}
+			result += string(unicode.ToLower(r))
+	}
+	return result
 }

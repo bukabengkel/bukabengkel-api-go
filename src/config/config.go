@@ -9,18 +9,22 @@ import (
 
 // Config ...
 type Config struct {
-	Env                  string
-	Port                 string
-	BaseURL              string
-	DatabaseURL          string
-	LoggerLevel          string
-	ContextTimeout       int
-	JWTSecretKey         string
-	CasbinModelFilePath  string
-	CasbinPolicyFilePath string
-	Storage              StorageConfig
-	Cache                CacheConfig
-	ShippingProvider     ShippingProviderConfig
+	Env                         string
+	Port                        string
+	BaseURL                     string
+	DatabaseURL                 string
+	LoggerLevel                 string
+	ContextTimeout              int
+	JWTSecretKey                string
+	CasbinModelFilePath         string
+	CasbinPolicyFilePath        string
+	Storage                     StorageConfig
+	Cache                       CacheConfig
+	ShippingProvider            ShippingProviderConfig
+	PaymentProvider             PaymentProviderConfig
+	EmailProvider               EmailConfig
+	AsianAccessoriesAPIKey      string
+	AsianAccessoriesCheckoutURL string
 }
 
 type StorageConfig struct {
@@ -41,8 +45,18 @@ type CacheConfig struct {
 }
 
 type ShippingProviderConfig struct {
-	ShippingProviderName string
+	ShippingProviderName   string
 	ShippingProviderAPIKey string
+}
+
+type PaymentProviderConfig struct {
+	PaymentProviderName   string
+	PaymentProviderAPIKey string
+}
+
+type EmailConfig struct {
+	EmailServiceName string
+	EmailAPIKey      string
 }
 
 // LoadConfig will load config from environment variable
@@ -93,6 +107,15 @@ func LoadConfig() (config *Config) {
 	shippingProviderName := os.Getenv("SHIPPING_PROVIDER")
 	shippingProviderAPIKey := os.Getenv("SHIPPING_PROVIDER_API_KEY")
 
+	paymentProviderName := os.Getenv("PAYMENT_PROVIDER")
+	paymentProviderAPIKey := os.Getenv("PAYMENT_PROVIDER_API_KEY")
+
+	emailServiceName := os.Getenv("MAILER_PROVIDER")
+	emailAPIKey := os.Getenv("MAILER_PROVIDER_API_KEY")
+
+	asianAccessoriesAPIKey := os.Getenv("ASIAN_ACCESSORIES_API_KEY")
+	asianAccessoriesCheckoutURL := os.Getenv("ASIAN_ACCESSORIES_CHECKOUT_URL")
+
 	return &Config{
 		Env:                  env,
 		Port:                 port,
@@ -119,8 +142,18 @@ func LoadConfig() (config *Config) {
 			CachePort:        cachePort,
 		},
 		ShippingProvider: ShippingProviderConfig{
-			ShippingProviderName: shippingProviderName,
+			ShippingProviderName:   shippingProviderName,
 			ShippingProviderAPIKey: shippingProviderAPIKey,
 		},
+		PaymentProvider: PaymentProviderConfig{
+			PaymentProviderName:   paymentProviderName,
+			PaymentProviderAPIKey: paymentProviderAPIKey,
+		},
+		EmailProvider: EmailConfig{
+			EmailServiceName: emailServiceName,
+			EmailAPIKey:      emailAPIKey,
+		},
+		AsianAccessoriesAPIKey:      asianAccessoriesAPIKey,
+		AsianAccessoriesCheckoutURL: asianAccessoriesCheckoutURL,
 	}
 }

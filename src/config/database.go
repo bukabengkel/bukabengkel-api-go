@@ -3,6 +3,7 @@ package config
 import (
 	"database/sql"
 	"runtime"
+	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -20,6 +21,7 @@ func LoadDatabase(c *Config) *bun.DB {
 		maxOpenConns := 4 * runtime.GOMAXPROCS(0)
 		sqldb.SetMaxOpenConns(maxOpenConns)
 		sqldb.SetMaxIdleConns(maxOpenConns)
+		sqldb.SetConnMaxLifetime(time.Minute * 5)
 	}
 
 	db := bun.NewDB(sqldb, pgdialect.New())

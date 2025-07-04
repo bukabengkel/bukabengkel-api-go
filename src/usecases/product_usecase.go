@@ -13,6 +13,7 @@ import (
 
 type ProductUsecase interface {
 	List(ctx context.Context, dto request.ProductListDTO) (*[]models.Product, int, error)
+	ListV2(ctx context.Context, dto request.ProductListDTO) (*[]models.Product, bool, error)
 }
 
 type productUsecase struct {
@@ -83,4 +84,62 @@ func (u *productUsecase) List(ctx context.Context, dto request.ProductListDTO) (
 	}
 
 	return products, count, nil
+}
+
+func (u *productUsecase) ListV2(ctx context.Context, dto request.ProductListDTO) (*[]models.Product, bool, error) {
+	filter := repository.ProductRepositoryFilter{
+		StoreID: &dto.StoreID,
+	}
+
+	page, err := strconv.Atoi(dto.Page)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	perPage, err := strconv.Atoi(dto.PerPage)
+	if err != nil || perPage < 1 || perPage > 100 {
+		perPage = 10
+	}
+
+	if dto.Name != "" && len(dto.Name) >= 3 {
+		filter.Name = utils.String(dto.Name)
+	}
+
+	if dto.Keyword != "" && len(dto.Keyword) >= 3 {
+		filter.Name = utils.String(dto.Keyword)
+	}
+
+	if dto.CategoryId != "" && dto.CategoryId != "0" {
+		filter.CategoryId = utils.String(dto.CategoryId)
+	}
+
+	if dto.StockMoreThan != "" {
+		stockMoreThan, err := strconv.ParseUint(dto.StockMoreThan, 10, 10)
+		if err != nil {
+			return nil, false, err
+		}
+
+		filter.StockMoreThan = ptr.Of(uint(stockMoreThan))
+	}
+
+	if dto.Status != "" {
+		status, err := strconv.ParseUint(dto.Status, 10, 10)
+		if err != nil {
+			return nil, false, err
+		}
+
+		filter.Status = ptr.Of(uint(status))
+	}
+
+	sort := "name"
+	if dto.Sort != "" {
+		sort = dto.Sort
+	}
+
+	products, hasNext, err := u.productRepository.ListV2(ctx, page, perPage, sort, filter)
+	if err != nil {
+		err = utils.NewInternalServerError(err)
+	}
+
+	return products, hasNext, nil
 }

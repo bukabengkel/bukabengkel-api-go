@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/peang/bukabengkel-api-go/src/models"
 	"github.com/uptrace/bun"
@@ -41,7 +42,11 @@ func (r *LocationRepository) FindOne(ctx context.Context, cond LocationRepositor
 	var location models.RajaOngkirLocation
 	err := query.Scan(ctx, &location)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, nil
+		} else {
+			return nil, err
+		}
 	}
 
 	return &location, nil

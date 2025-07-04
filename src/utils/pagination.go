@@ -30,6 +30,21 @@ func GenerateOffsetLimit(page, perPage int) (offset, limit int) {
 	return offset, limit
 }
 
+func GenerateOffsetLimitV2(page, perPage int) (offset, limit int) {
+	if page < 1 {
+		page = 1
+	}
+
+	if perPage < 1 {
+		perPage = 10
+	}
+
+	offset = (page - 1) * (perPage + 1)
+	limit = perPage + 1
+
+	return offset, limit
+}
+
 func ParsePageAndPerPage(pageString string, perPageString string) (page int, perPage int, err error) {
 	if pageString == "" || pageString == "0" {
 		page = 1

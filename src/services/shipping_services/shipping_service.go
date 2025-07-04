@@ -11,15 +11,6 @@ type ShippingService interface {
 	CalculateShipping(data interface{}) (interface{}, error)
 }
 
-type FileUploadResponse struct {
-	Filename  string
-	Size      int64
-	Extension string
-	Etag      string
-	Bucket    string
-	Key       string
-}
-
 const (
 	SHIPPING_SERVICE_RAJAONGKIR = "rajaongkir"
 )

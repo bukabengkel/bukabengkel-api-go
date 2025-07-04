@@ -3,13 +3,14 @@ package cache_services
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/peang/bukabengkel-api-go/src/config"
 )
 
 type CacheService interface {
-	Get(ctx context.Context, key string) (interface{}, error)
-	Set(ctx context.Context, key string, value interface{}) error
+	Get(ctx context.Context, key string) (any, error)
+	Set(ctx context.Context, key string, value any, ttl time.Duration) error
 	Delete(ctx context.Context, key string) error
 }
 
