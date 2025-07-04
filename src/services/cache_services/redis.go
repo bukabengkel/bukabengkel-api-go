@@ -4,12 +4,14 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/peang/bukabengkel-api-go/src/config"
+	"github.com/peang/bukabengkel-api-go/src/models"
 )
 
 type redisCache struct {
@@ -27,8 +29,9 @@ func newRedisCache(config *config.Config) CacheService {
 	}
 }
 
-func (r *redisCache) Get(ctx context.Context, key string) (value interface{}, err error) {
+func (r *redisCache) Get(ctx context.Context, key string) (value any, err error) {
 	result, err := r.client.Get(ctx, key).Result()
+	fmt.Println("result", result)
 	if result == "" {
 		return nil, err
 	}
@@ -36,20 +39,24 @@ func (r *redisCache) Get(ctx context.Context, key string) (value interface{}, er
 	return result, err
 }
 
-func (r *redisCache) Set(ctx context.Context, key string, value interface{}) error {
-	hashValue, err := HashValue(value)
-	if err != nil {
-		return err
+func (r *redisCache) Set(ctx context.Context, key string, value any, ttl time.Duration) error {
+	// hashValue, err := HashValue(value)
+	// if err != nil {
+	// 	return err
+	// }
+
+	if ttl == 0 {
+		ttl = time.Hour * 1
 	}
 
-	return r.client.Set(ctx, key, hashValue, time.Hour*1).Err()
+	return r.client.Set(ctx, key, value, ttl).Err()
 }
 
 func (r *redisCache) Delete(ctx context.Context, key string) error {
 	return r.client.Del(ctx, key).Err()
 }
 
-func HashValue(value interface{}) (string, error) {
+func HashValue(value any) (string, error) {
 	by, err := convertToBytes(value)
 	if err != nil {
 		return "", err
@@ -64,12 +71,14 @@ func HashValue(value interface{}) (string, error) {
 }
 
 // convertToBytes converts the input value to a byte slice
-func convertToBytes(input interface{}) ([]byte, error) {
+func convertToBytes(input any) ([]byte, error) {
 	switch v := input.(type) {
 	case string:
 		return []byte(v), nil
 	case []byte:
 		return v, nil
+	case *[]models.Product:
+		return json.Marshal(v)
 	default:
 		// For other types, use reflection to convert to bytes
 		valueType := reflect.TypeOf(input)

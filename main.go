@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -13,6 +12,7 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/cmd"
 	"github.com/peang/bukabengkel-api-go/src/config"
 	"github.com/peang/bukabengkel-api-go/src/handlers"
+	admin_handler "github.com/peang/bukabengkel-api-go/src/handlers/admin"
 	"github.com/peang/bukabengkel-api-go/src/middleware"
 	repository "github.com/peang/bukabengkel-api-go/src/repositories"
 	"github.com/peang/bukabengkel-api-go/src/services/cache_services"
@@ -23,12 +23,11 @@ import (
 	"github.com/peang/bukabengkel-api-go/src/services/shipping_services"
 	"github.com/peang/bukabengkel-api-go/src/transport/request"
 	usecase "github.com/peang/bukabengkel-api-go/src/usecases"
+	admin_usecase "github.com/peang/bukabengkel-api-go/src/usecases/admin"
 	cartShoppingUsecase "github.com/peang/bukabengkel-api-go/src/usecases/cart_shopping"
 	orderDistributorUsecase "github.com/peang/bukabengkel-api-go/src/usecases/order_distributor"
 	webhookUsecase "github.com/peang/bukabengkel-api-go/src/usecases/webhook"
 	utils "github.com/peang/bukabengkel-api-go/src/utils"
-
-	server "github.com/restatedev/sdk-go/server"
 
 	"github.com/robfig/cron/v3"
 )
@@ -75,7 +74,7 @@ func main() {
 
 	// Repositories
 	imageRepo := repository.NewImageRepository(db, fileService)
-	productRepo := repository.NewProductRepository(db, imageRepo)
+	productRepo := repository.NewProductRepository(db, imageRepo, cacheService)
 	productDistRepo := repository.NewProductDistributorRepository(db, fileService)
 	productCatDistRepo := repository.NewProductCategoryDistributorRepository(db)
 	productExportLogRepo := repository.NewProductExportLogRepository(db)
@@ -83,11 +82,12 @@ func main() {
 	orderDistributorRepo := repository.NewOrderDistributorRepository(db, cacheService)
 	distributorRepo := repository.NewDistributorRepository(db)
 	cartRepo := repository.NewCartRepository(redis)
-	// storeRepo := repository.NewStoreRepository(db)
+	storeRepo := repository.NewStoreRepository(db)
 	userStoreRepo := repository.NewUserStoreAggregateRepository(db)
 	locationRepo := repository.NewLocationRepository(db)
 
 	// Usecases
+	adminUsecase := admin_usecase.NewDashboardUsecase(orderRepo, productRepo, storeRepo, userStoreRepo)
 	reportUsecase := usecase.NewReportUsecase(orderRepo)
 	productUsecase := usecase.NewProductUsecase(productRepo)
 	productDistributorUsecase := usecase.NewProductDistributorUsecase(productDistRepo, distributorRepo)
@@ -100,6 +100,8 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.CORSMiddleware())
 	e.Validator = &request.CustomValidator{Validator: validator.New()}
+
+	admin_handler.NewDashboardHandler(e, middleware, adminUsecase)
 
 	handlers.NewReportHandler(e, middleware, reportUsecase)
 	handlers.NewProductHandler(e, middleware, productUsecase)
@@ -128,11 +130,11 @@ func main() {
 	c.Start()
 	defer c.Stop()
 
-	go func() {
-		restateServer := server.NewRestate()
-		// restateServer.Bind(restate.Reflect(MyService{}))
-		restateServer.Start(context.Background(), fmt.Sprintf(":%s", "9080"))
-	}()
+	// go func() {
+	// 	restateServer := server.NewRestate()
+	// 	// restateServer.Bind(restate.Reflect(MyService{}))
+	// 	restateServer.Start(context.Background(), fmt.Sprintf(":%s", "9080"))
+	// }()
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", configApp.Port)))
 

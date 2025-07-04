@@ -2,9 +2,6 @@ package repository
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
-	"fmt"
 	"time"
 
 	"github.com/peang/bukabengkel-api-go/src/services/cache_services"
@@ -117,13 +114,25 @@ func (r *OrderRepository) ProductSalesReport(ctx context.Context, page int, perP
 	return &results, &count, nil
 }
 
-func GenerateHashKey(filter OrderRepositoryFilter) string {
-	id := fmt.Sprint("report_sales_", filter.StoreID, "_", filter.StartDate, "_", filter.EndDate)
+func (r *OrderRepository) Count(ctx context.Context, filter OrderRepositoryFilter) (int, error) {
+	sl := r.db.NewSelect().Table("order")
+	sl = r.queryBuilder(sl, filter)
 
-	hash := md5.New()
-	hash.Write([]byte(id))
-	hashedBytes := hash.Sum(nil)
-	hashedString := hex.EncodeToString(hashedBytes)
+	count, err := sl.Count(ctx)
+	if err != nil {
+		return 0, err
+	}
 
-	return hashedString
+	return count, nil
 }
+
+// func GenerateHashKey(filter OrderRepositoryFilter) string {
+// 	id := fmt.Sprint("report_sales_", filter.StoreID, "_", filter.StartDate, "_", filter.EndDate)
+
+// 	hash := md5.New()
+// 	hash.Write([]byte(id))
+// 	hashedBytes := hash.Sum(nil)
+// 	hashedString := hex.EncodeToString(hashedBytes)
+
+// 	return hashedString
+// }
