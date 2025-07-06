@@ -109,7 +109,7 @@ func (r *ProductRepository) queryBuilder(query *bun.SelectQuery, cond ProductRep
 }
 
 func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sort string, filter ProductRepositoryFilter) (*[]models.Product, int, error) {
-  // // Generate cache key berdasarkan parameter
+	// // Generate cache key berdasarkan parameter
 	// cacheKey := r.generateCacheKey("product_list", page, perPage, sort, filter)
 
 	// // Coba ambil dari cache terlebih dahulu
@@ -124,8 +124,13 @@ func (r *ProductRepository) List(ctx context.Context, page int, perPage int, sor
 
 	var products []models.Product
 
-	// Use prepared statement
-	query := r.statements.listQuery
+	// Buat query baru setiap kali, bukan menggunakan prepared statement
+	baseModel := (*models.Product)(nil)
+	query := r.db.NewSelect().Model(baseModel).
+		Relation("Store").
+		Relation("Brand").
+		Relation("Category")
+
 	query = r.queryBuilder(query, filter)
 
 	count, err := query.
