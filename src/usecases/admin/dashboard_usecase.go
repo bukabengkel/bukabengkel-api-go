@@ -36,65 +36,75 @@ func NewDashboardUsecase(
 }
 
 func (u *dashboardUsecase) Dashboard(ctx context.Context, dto *admin_request.AdminDashboardDTO) (*admin_response.AdminDashboardResponse, error) {
+	now := time.Now()
+	month := now.Month()
+	year := now.Year()
+
+	monthStart := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
+	monthEnd := monthStart.AddDate(0, 1, 0).Add(-time.Second)
+
+	lastMonthStart := monthStart.AddDate(0, -1, 0)
+	lastMonthEnd := lastMonthStart.AddDate(0, 1, 0).Add(-time.Second)
+
 	totalOrderThisMonth, err := u.orderRepository.Count(ctx, repository.OrderRepositoryFilter{
-		StartDate: ptr.Of(time.Now().AddDate(0, -1, 0)),
-		EndDate: ptr.Of(time.Now()),
+		StartDate: ptr.Of(monthStart),
+		EndDate: ptr.Of(monthEnd),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	totalOrderLastMonth, err := u.orderRepository.Count(ctx, repository.OrderRepositoryFilter{
-		StartDate: ptr.Of(time.Now().AddDate(0, -2, 0)),
-		EndDate: ptr.Of(time.Now().AddDate(0, -1, 0)),
+		StartDate: ptr.Of(lastMonthStart),
+		EndDate: ptr.Of(lastMonthEnd),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	totalProductThisMonth, err := u.productRepository.Count(ctx, repository.ProductRepositoryFilter{
-		StartDate: ptr.Of(time.Now().AddDate(0, -1, 0)),
-		EndDate: ptr.Of(time.Now()),
+		StartDate: ptr.Of(monthStart),
+		EndDate: ptr.Of(monthEnd),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	totalProductLastMonth, err := u.productRepository.Count(ctx, repository.ProductRepositoryFilter{
-		StartDate: ptr.Of(time.Now().AddDate(0, -2, 0)),
-		EndDate: ptr.Of(time.Now().AddDate(0, -1, 0)),
+		StartDate: ptr.Of(lastMonthStart),
+		EndDate: ptr.Of(lastMonthEnd),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	totalStoreThisMonth, err := u.storeRepository.Count(ctx, repository.StoreRepositoryFilter{
-		StartDate: ptr.Of(time.Now().AddDate(0, -1, 0)),
-		EndDate: ptr.Of(time.Now()),
+		StartDate: ptr.Of(monthStart),
+		EndDate: ptr.Of(monthEnd),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	totalStoreLastMonth, err := u.storeRepository.Count(ctx, repository.StoreRepositoryFilter{
-		StartDate: ptr.Of(time.Now().AddDate(0, -2, 0)),
-		EndDate: ptr.Of(time.Now().AddDate(0, -1, 0)),
+		StartDate: ptr.Of(lastMonthStart),
+		EndDate: ptr.Of(lastMonthEnd),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	totalOrderAmountThisMonth, err := u.orderRepository.OrderSalesReport(ctx, repository.OrderRepositoryFilter{
-		StartDate: ptr.Of(time.Now().AddDate(0, -1, 0)),
-		EndDate: ptr.Of(time.Now()),
+		StartDate: ptr.Of(monthStart),
+		EndDate: ptr.Of(monthEnd),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	totalOrderAmountLastMonth, err := u.orderRepository.OrderSalesReport(ctx, repository.OrderRepositoryFilter{
-		StartDate: ptr.Of(time.Now().AddDate(0, -2, 0)),
-		EndDate: ptr.Of(time.Now().AddDate(0, -1, 0)),
+		StartDate: ptr.Of(lastMonthStart),
+		EndDate: ptr.Of(lastMonthEnd),
 	})
 	if err != nil {
 		return nil, err
